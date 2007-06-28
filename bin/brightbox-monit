@@ -1,0 +1,68 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'optparse'
+require 'erb'
+
+@mongrelhost = "127.0.0.1"
+@port = 9200
+@mongrels = 2
+@railsenv = "production"
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [options] [args]"
+
+  opts.on("-n", "--name APPLICATION_NAME",
+    "Name of application."
+  ) { |value| @application = value }
+  opts.on("-r", "--railsroot RAILS_ROOT",
+    "path to rails root"
+  ) { |value| @railsroot = value }
+  opts.on("-e", "--railsenv RAILS_ENV",
+    "rails environment"
+  ) { |value| @railsroot = value }
+  opts.on("-p", "--port MONGREL_PORT",
+    "Port of the first mongrel sevuce"
+  ) { |value| @port = value.to_i }
+  opts.on("-s", "--servers MONGRELS",
+    "Number of mongrel servers running"
+  ) { |value| @mongrels = value.to_i }
+  opts.on("-h", "--mongrelhost MONGREL_HOST",
+    "ip/host where mongrel is running"
+  ) { |value| @mongrelhost = value }
+ 
+  if ARGV.empty?
+    puts opts
+      exit
+  else
+    opts.parse!(ARGV)
+  end
+end
+
+@mongrel_instances = (@port..@port+@mongrels-1).collect { |port| [port, "#{@railsroot}/log/mongrel.#{port}.pid"] }
+
+TEMPLATE = <<EOT
+<% @mongrel_instances.each do |port, pidfile| %>
+check process mongrel_<%= @application %>_<%= port %> with pidfile <%= pidfile %>
+  group <%= @application %>
+  start program = "/usr/bin/mongrel_rails start -d -c <%= @railsroot %> -p <%= port %> -e <%= @railsenv %> -P <%= pidfile %>"
+    as uid rails and gid rails
+  stop program = "/usr/bin/mongrel_rails stop -c <%= @railsroot %> -P <%= pidfile %> -w 20"
+    as uid rails and gid rails
+
+  if failed host <%= @mongrelhost %> port <%= port %> protocol http
+    with timeout 30 seconds
+    then restart
+
+  if totalmem > 110 Mb then restart
+  #if cpu is greater than 60% for 2 cycles then alert
+  if cpu > 90% for 5 cycles then restart
+  #if loadavg(5min) greater than 10 for 8 cycles then restart
+  if 3 restarts within 5 cycles then timeout
+<% end %>
+EOT
+
+template = ERB.new(TEMPLATE)
+config = template.result
+
+File.open("/etc/monit/conf.d/rails-#{@application}.monitrc", "w") { |f| f.write config }

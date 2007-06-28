@@ -1,0 +1,73 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'optparse'
+require 'erb'
+require 'fileutils'
+
+@mongrelhost = "127.0.0.1"
+@port = 9200
+@mongrels = 2
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$0} [options] [args]"
+
+  opts.on("-n", "--name APPLICATION_NAME",
+    "Name of application."
+  ) { |value| @application = value }
+  opts.on("-w", "--webroot WEB_ROOT",
+    "path to web root"
+  ) { |value| @webroot = value }
+  opts.on("-d", "--domain DOMAIN_NAME",
+    "Domain name for application."
+  ) { |value| @domain = value }
+  opts.on("-p", "--port MONGREL_PORT",
+    "Port of the first mongrel sevuce"
+  ) { |value| @port = value.to_i }
+  opts.on("-s", "--servers MONGRELS",
+    "Number of mongrel servers running"
+  ) { |value| @mongrels = value.to_i }
+  opts.on("-h", "--mongrelhost MONGREL_HOST",
+    "ip/host where mongrel is running"
+  ) { |value| @mongrelhost = value }
+ 
+  if ARGV.empty?
+    puts opts
+      exit
+  else
+    opts.parse!(ARGV)
+  end
+end
+
+@balancer_members = (@port..@port+@mongrels-1).collect {|i| "    BalancerMember http://#{@mongrelhost}:#{i}" }.join("\n")
+
+TEMPLATE = <<EOT
+<VirtualHost *:80>
+  ServerName <%= @domain %>
+  DocumentRoot <%= @webroot %>
+
+  <Directory "<%= @webroot %>">
+    Options FollowSymLinks
+    AllowOverride None
+    Order allow,deny
+    Allow from all
+  </Directory>
+
+  # Configure mongrel_cluster
+  <Proxy balancer://mongrel_cluster>
+<%= @balancer_members %>
+  </Proxy>
+
+  ErrorLog /var/log/apache2/<%= @application %>_error_log
+  CustomLog /var/log/apache2/<%= @application %>_log combined
+
+  # Rails specific rewrite rules
+  Include /etc/apache2/brightbox-common
+</VirtualHost>
+EOT
+
+template = ERB.new(TEMPLATE)
+config = template.result
+
+File.open("/etc/apache2/sites-available/rails-#{@application}", "w") { |f| f.write config }
+FileUtils.ln_s("/etc/apache2/sites-available/rails-#{@application}", "/etc/apache2/sites-enabled/rails-#{@application}", :force => true)
