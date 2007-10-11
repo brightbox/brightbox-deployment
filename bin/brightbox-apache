@@ -77,7 +77,7 @@ config = template.result
 filename = "/etc/apache2/sites-available/rails-#{@application}"
 if File.exists?(filename)
   FileUtils.mkdir_p("/etc/apache2/sites-archived")
-  FileUtils.cp filename, "/etc/apache2/sites-archived/#{filename}.#{Time.now.strftime('%y%m%d%H%M%S')}"
+  FileUtils.cp filename, "/etc/apache2/sites-archived/rails-#{@application}.#{Time.now.strftime('%y%m%d%H%M%S')}"
 end
 
 File.open(filename, "w") { |f| f.write config }
