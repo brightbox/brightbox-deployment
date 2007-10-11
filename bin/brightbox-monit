@@ -56,7 +56,7 @@ check process mongrel_<%= @application %>_<%= port %> with pidfile <%= pidfile %
 
   if totalmem > 110 Mb then restart
   #if cpu is greater than 60% for 2 cycles then alert
-  if cpu > 90% for 5 cycles then restart
+  #if cpu > 90% for 5 cycles then restart
   #if loadavg(5min) greater than 10 for 8 cycles then restart
   if 3 restarts within 5 cycles then timeout
 <% end %>
