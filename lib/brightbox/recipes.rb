@@ -1,95 +1,96 @@
-require 'mongrel_cluster/recipes'
-
 Capistrano.configuration(:must_exist).load do
 
-desc "Create apache config for this app on your Brightbox web servers"
-task :setup_apache, :roles => :web do
-  sudo "/usr/bin/brightbox-apache -n #{application} -d #{domain} -w #{current_path}/public -h #{mongrel_host} -p #{mongrel_port} -s #{mongrel_servers}"
-  sudo "/usr/sbin/apache2ctl -t"
-end
-
-desc "Reload apache on your Brightbox web servers"
-task :reload_apache, :roles => :web do
-  sudo "/usr/sbin/apache2ctl -t"
-  sudo "/usr/sbin/apache2ctl graceful"
-end
-
-desc "Load the rails db schema on the primary db server"
-task :load_schema, :roles => :db, :primary => true do
-  run "cd #{current_path} && #{rake} RAILS_ENV=#{rails_env} db:schema:load"
-end
-
-desc "Configure monit to handle the mongrel servers for this app"
-task :configure_mongrel_cluster, :roles => :app do
-  sudo "/usr/bin/brightbox-monit -n #{application} -r #{current_path} -p #{mongrel_port} -s #{mongrel_servers} -h #{mongrel_host}"
-end
-
-desc "Restart the mongrel servers using monit"
-task :restart_mongrel_cluster, :roles => :app do
-  sudo "/usr/sbin/monit -g #{application} restart all"
-end
-
-desc "Start the mongrel servers using monit"
-task :start_mongrel_cluster, :roles => :app do
-  sudo "/usr/sbin/monit -g #{application} start all"
-end
-
-desc "Stop the mongrel servers using monit"
-task :stop_mongrel_cluster, :roles => :app do
-  sudo "/usr/sbin/monit -g #{application} stop all"
-end
-
-desc "Display the monit status for this app"
-task :monit_status, :roles => :app do
-  sudo "/usr/sbin/monit -g #{application} status"
-end
-
-desc "Reload the monit daemon"
-task :monit_reload, :roles => :app do
-  sudo "/usr/sbin/monit reload"
-end
-
-desc "Deploy the app to your Brightbox servers for the FIRST TIME.  Sets up apache config starts mongrel."
-task :cold_deploy do
-  transaction do
-    update_code
-    symlink
+namespace :apache do
+  desc "Reload Apache on your Brightbox web servers"
+  task :reload, :roles => :web do
+    sudo "/usr/sbin/apache2ctl -t"
+    sudo "/usr/sbin/apache2ctl graceful"
   end
 
-  create_mysql_database
-  load_schema
+  desc "Create Apache config for this app on your Brightbox web servers"
+  task :setup, :roles => :web do
+    sudo "/usr/bin/brightbox-apache -n #{application} -d #{domain} -w #{current_path}/public -h #{mongrel_host} -p #{mongrel_port} -s #{mongrel_servers}"
+    sudo "/usr/sbin/apache2ctl -t"
+  end
+
+end
+
+namespace :mongrel do
+  desc "Configure monit to handle the mongrel servers for this app"
+  task :configure_cluster, :roles => :app do
+    sudo "/usr/bin/brightbox-monit -n #{application} -r #{current_path} -p #{mongrel_port} -s #{mongrel_servers} -h #{mongrel_host}"
+  end
+
+  desc "Restart the mongrel servers using monit"
+  task :restart_cluster, :roles => :app do
+    sudo "/usr/sbin/monit -g #{application} restart all"
+  end
+
+  desc "Start the mongrel servers using monit"
+  task :start_cluster, :roles => :app do
+    sudo "/usr/sbin/monit -g #{application} start all"
+  end
+
+  desc "Stop the mongrel servers using monit"
+  task :stop_cluster, :roles => :app do
+    sudo "/usr/sbin/monit -g #{application} stop all"
+  end
+end
+
+namespace :monit do
+  desc "Display the monit status summary"
+  task :status, :roles => :app do
+    sudo "/usr/sbin/monit -g #{application} status"
+  end
+
+  desc "Reload the monit daemon"
+  task :reload, :roles => :app do
+    sudo "/usr/sbin/monit reload"
+  end
+end
+
+desc "Deploy the app to your Brightbox servers for the FIRST TIME.  Sets up Apache config, creates MySQL database and starts Mongrel."
+deploy.task :cold do
+  transaction do
+    deploy.update_code
+    deploy.symlink
+  end
+
+  mysql.create_database
   migrate
-  configure_mongrel_cluster
-  monit_reload
-  start_mongrel_cluster
-  setup_apache
-  reload_apache
+  mongrel.configure_cluster
+  monit.reload
+  mongrel.start_cluster
+  apache.setup
+  apache.reload
 end
 
 desc "Deploy the app to your Brightbox servers"
-task :deploy do
+deploy.task :default do
   transaction do
-    update_code
-    disable_web
-    stop_mongrel_cluster
+    deploy.update_code
+    web.disable
+    mongrel.stop_cluster
     symlink
-    start_mongrel_cluster
+    mongrel.start_cluster
   end
 
-  enable_web
+  web.enable
 end
 
-desc "Create the mysql database named in the database.yml on the primary db server"
-task :create_mysql_database, :roles => :db, :primary => true do
- read_db_config
- if db_adapter == 'mysql'
-   run "mysql -h #{db_host} --user=#{db_user} -p --execute=\"CREATE DATABASE #{db_name}\" || true" do |channel, stream, data|
-     if data =~ /^Enter password:/
-       logger.info data, "[database on #{channel[:host]} asked for password]"
-       channel.send_data "#{db_password}\n" 
-     end
-   end
- end
+namespace :mysql do
+  desc "Create the mysql database named in the database.yml on the primary db server"
+  task :create_database, :roles => :db, :primary => true do
+    read_db_config
+    if db_adapter == 'mysql'
+      run "mysql -h #{db_host} --user=#{db_user} -p --execute=\"CREATE DATABASE #{db_name}\" || true" do |channel, stream, data|
+        if data =~ /^Enter password:/
+          logger.info data, "[database on #{channel[:host]} asked for password]"
+          channel.send_data "#{db_password}\n" 
+        end
+      end
+    end
+  end
 end
   
 def read_db_config

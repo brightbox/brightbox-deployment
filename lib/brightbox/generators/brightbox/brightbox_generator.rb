@@ -14,6 +14,7 @@ class BrightboxGenerator < Rails::Generator::NamedBase
     record do |m|
       m.directory "config"
       m.template "deploy.rb", File.join("config", "deploy.rb")
+      m.template "Capfile", File.join("Capfile")
     end
   end
 
