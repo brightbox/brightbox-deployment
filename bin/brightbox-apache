@@ -42,6 +42,7 @@ end
 @balancer_members = (@port..@port+@mongrels-1).collect {|i| "    BalancerMember http://#{@mongrelhost}:#{i}" }.join("\n")
 
 TEMPLATE = <<EOT
+# Created by the Brightbox Capistrano GEM at <%= Time.now %>
 <VirtualHost *:80>
   ServerName <%= @domain %>
   DocumentRoot <%= @webroot %>
@@ -58,16 +59,26 @@ TEMPLATE = <<EOT
 <%= @balancer_members %>
   </Proxy>
 
-  ErrorLog /var/log/apache2/<%= @application %>_error_log
-  CustomLog /var/log/apache2/<%= @application %>_log combined
+  ErrorLog /var/log/web/<%= @application %>.err
+  CustomLog /var/log/web/<%= @application %>.log combined
 
   # Rails specific rewrite rules
   Include /etc/apache2/brightbox-common
+
+  # Add any access limit directives here
+  <Location />
+    Allow from all
+  </Location>
 </VirtualHost>
 EOT
 
 template = ERB.new(TEMPLATE)
 config = template.result
+filename = "/etc/apache2/sites-available/rails-#{@application}"
+if File.exists?(filename)
+  FileUtils.mkdir_p("/etc/apache2/sites-archived")
+  FileUtils.cp filename, "/etc/apache2/sites-archived/#{filename}.#{Time.now.strftime('%y%m%d%H%M%S')}"
+end
 
-File.open("/etc/apache2/sites-available/rails-#{@application}", "w") { |f| f.write config }
-FileUtils.ln_s("/etc/apache2/sites-available/rails-#{@application}", "/etc/apache2/sites-enabled/rails-#{@application}", :force => true)
+File.open(filename, "w") { |f| f.write config }
+FileUtils.ln_s(filename, "/etc/apache2/sites-enabled/rails-#{@application}", :force => true)
