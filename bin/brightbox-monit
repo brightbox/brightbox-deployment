@@ -72,5 +72,10 @@ EOT
 
 template = ERB.new(TEMPLATE)
 config = template.result
+filename = "/etc/monit/conf.d/rails-#{@application}.monitrc"
+if File.exists?(filename)
+  FileUtils.mkdir_p("/etc/monit/archived-configs")
+  FileUtils.cp filename, "/etc/monit/archived-configs/rails-#{@application}.monitrc.#{Time.now.strftime('%y%m%d%H%M%S')}"
+end
 
-File.open("/etc/monit/conf.d/rails-#{@application}.monitrc", "w") { |f| f.write config }
+File.open(filename, "w") { |f| f.write config }
