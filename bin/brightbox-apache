@@ -27,7 +27,7 @@ OptionParser.new do |opts|
     "Aliases for domain name, comma separated (e.g: www.example.org,www.example.net)"
   ) { |value| @aliases = value.to_s.split(',').join(' ')}
   opts.on("-p", "--port MONGREL_PORT",
-    "Port of the first mongrel sevice"
+    "Port of the first mongrel service"
   ) { |value| @port = value.to_i }
   opts.on("-s", "--servers MONGRELS",
     "Number of mongrel servers running"
