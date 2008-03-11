@@ -8,30 +8,39 @@ require 'erb'
 @port = 9200
 @mongrels = 2
 @railsenv = "production"
+@railsuser = "rails"
+@railsgroup = "rails"
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: #{$0} [options] [args]"
+  opts.banner = "brightbox-monit creates a Monit config for a Rails app\n"
+  opts.banner << "Usage: #{$0} [options] [args]"
 
   opts.on("-n", "--name APPLICATION_NAME",
-    "Name of application."
+    "Name of application (a short useful name for the app such as: myforum)"
   ) { |value| @application = value }
   opts.on("-r", "--railsroot RAILS_ROOT",
-    "path to rails root"
+    "Full path to rails root (e.g: /home/rails/myforum/current)"
   ) { |value| @railsroot = value }
   opts.on("-e", "--railsenv RAILS_ENV",
-    "rails environment"
-  ) { |value| @railsroot = value }
+    "rails environment (default: #{@railsenv})"
+  ) { |value| @railsenv = value }
   opts.on("-p", "--port MONGREL_PORT",
-    "Port of the first mongrel sevuce"
+    "Port of the first mongrel service (default: #{@port})"
   ) { |value| @port = value.to_i }
   opts.on("-s", "--servers MONGRELS",
-    "Number of mongrel servers running"
+    "Number of mongrel servers running (default: #{@mongrels})"
   ) { |value| @mongrels = value.to_i }
   opts.on("-h", "--mongrelhost MONGREL_HOST",
-    "ip/host where mongrel is running"
-  ) { |value| @mongrelhost = value }
+    "IP/host where mongrel is running (default: #{@mongrelhost})"
+  ) { |value| @mongrelhost = value }    
+  opts.on("-u", "--user USERNAME",
+    "The unix username the mongrel process should be started as (default: #{@railsuser})"
+  ) { |value| @railsuser = value }
+  opts.on("-u", "--group USERNAME",
+    "The unix group the mongrel process should be started as (default: #{@railsgroup})"
+  ) { |value| @railsgroup = value }
  
-  if ARGV.empty?
+  if ARGV.empty? or @railsroot.nil? or @application.nil?
     puts opts
       exit
   else
@@ -45,20 +54,19 @@ TEMPLATE = <<EOT
 <% @mongrel_instances.each do |port, pidfile| %>
 check process mongrel_<%= @application %>_<%= port %> with pidfile <%= pidfile %>
   group <%= @application %>
-  start program = "/usr/bin/mongrel_rails start -d -c <%= @railsroot %> -p <%= port %> -e <%= @railsenv %> -P <%= pidfile %>"
-    as uid rails and gid rails
-  stop program = "/usr/bin/mongrel_rails stop -c <%= @railsroot %> -P <%= pidfile %> -w 20"
-    as uid rails and gid rails
+  start program = "/usr/bin/mongrel_rails cluster::start -C <%= @railsroot %>config/mongrel_cluster.yml --clean --only <%= port %>"
+    as uid #{@railsuser} and gid #{@railsgroup}
+  stop program = "/usr/bin/mongrel_rails cluster::stop -C <%= @railsroot %>config/mongrel_cluster.yml --clean --only <%= port %>"
+    as uid #{@railsuser} and gid #{@railsgroup}
 
   if failed host <%= @mongrelhost %> port <%= port %> protocol http
     with timeout 30 seconds
     then restart
 
-  if totalmem > 110 Mb then restart
-  #if cpu is greater than 60% for 2 cycles then alert
-  #if cpu > 90% for 5 cycles then restart
+  if totalmem > 110 Mb for 3 cycles then restart
+  if cpu > 80% for 5 cycles then restart
   #if loadavg(5min) greater than 10 for 8 cycles then restart
-  if 3 restarts within 5 cycles then timeout
+  if 20 restarts within 20 cycles then timeout
 <% end %>
 EOT
 
