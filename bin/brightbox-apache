@@ -8,27 +8,31 @@ require 'fileutils'
 @mongrelhost = "127.0.0.1"
 @port = 9200
 @mongrels = 2
+@alises = ''
 
 OptionParser.new do |opts|
   opts.banner = "Usage: #{$0} [options] [args]"
 
   opts.on("-n", "--name APPLICATION_NAME",
-    "Name of application."
+    "Name of application (a short useful name for the app such as 'myforum')"
   ) { |value| @application = value }
   opts.on("-w", "--webroot WEB_ROOT",
-    "path to web root"
+    "Full path to web root (e.g: /home/rails/myforum/current/public)"
   ) { |value| @webroot = value }
   opts.on("-d", "--domain DOMAIN_NAME",
-    "Domain name for application."
+    "Domain name for application (e.g: www.example.com)"
   ) { |value| @domain = value }
+  opts.on("-a", "--aliases DOMAIN_NAME_ALIASES",
+    "Aliases for domain name, comma separated (e.g: www.example.org)"
+  ) { |value| @aliases = value.to_s.split(',').join(' ')}
   opts.on("-p", "--port MONGREL_PORT",
-    "Port of the first mongrel sevuce"
+    "Port of the first mongrel sevice"
   ) { |value| @port = value.to_i }
   opts.on("-s", "--servers MONGRELS",
     "Number of mongrel servers running"
   ) { |value| @mongrels = value.to_i }
   opts.on("-h", "--mongrelhost MONGREL_HOST",
-    "ip/host where mongrel is running"
+    "ip/host where mongrel is running (usually 127.0.0.1)"
   ) { |value| @mongrelhost = value }
  
   if ARGV.empty?
@@ -45,6 +49,9 @@ TEMPLATE = <<EOT
 # Created by the Brightbox Capistrano GEM at <%= Time.now %>
 <VirtualHost *:80>
   ServerName <%= @domain %>
+<% unless @aliases.empty? %>
+  ServerAlias <%= @aliases %>
+<% end %>
   DocumentRoot <%= @webroot %>
 
   <Directory "<%= @webroot %>">

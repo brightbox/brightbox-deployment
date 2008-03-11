@@ -11,27 +11,8 @@ module Brightbox
 
         args = ["brightbox"]
         args << (options[:application] || "Application")
-        args << (options[:domain] || "application.boxname.username.brightbox.co.uk")
-        args << (options[:server] || "87.237.63.??")
-
-        Rails::Generator::Scripts::Generate.new.run(args)
-      end
-    end
-    class ApacheLoader
-      def self.load!(options)
-        require "/home/john/devel/reflex/capistrano-setup/cap-test2/config/environment"
-        require "rails_generator"
-        require "rails_generator/scripts/generate"
-
-        Rails::Generator::Base.sources << Rails::Generator::PathSource.new(
-          :brightboxapache, "/etc/apache2/sites-available")
-
-        args = ["brightboxapache"]
-        args << (options[:application] || "application").downcase
-        args << (options[:web_root] || "/home/rails/#{options[:application]}/current/public")
-        args << (options[:domain] || "application.boxname.username.brightbox.co.uk")
-        args << (options[:port] || 9200)
-        args << (options[:mongrels] || 2)
+        args << (options[:domain] || "application.username-001.vm.brightbox.net")
+        args << (options[:server] || "username-001.vm.brightbox.net")
 
         Rails::Generator::Scripts::Generate.new.run(args)
       end
