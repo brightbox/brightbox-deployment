@@ -51,6 +51,7 @@ end
 @mongrel_instances = (@port..@port+@mongrels-1).collect { |port| [port, "#{@railsroot}/log/mongrel.#{port}.pid"] }
 
 TEMPLATE = <<EOT
+# Created by brightbox-monit at <%= Time.now %>
 <% @mongrel_instances.each do |port, pidfile| %>
 check process mongrel_<%= @application %>_<%= port %> with pidfile <%= pidfile %>
   group <%= @application %>

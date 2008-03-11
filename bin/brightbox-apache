@@ -47,7 +47,7 @@ end
 @balancer_members = (@port..@port+@mongrels-1).collect {|i| "    BalancerMember http://#{@mongrelhost}:#{i}" }.join("\n")
 
 TEMPLATE = <<EOT
-# Created by the Brightbox Capistrano GEM at <%= Time.now %>
+# Created by brightbox-apache at <%= Time.now %>
 <VirtualHost *:80>
   ServerName <%= @domain %>
 <% unless @aliases.empty? %>
