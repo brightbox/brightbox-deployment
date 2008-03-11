@@ -9,7 +9,7 @@ namespace :apache do
 
   desc "Create Apache config for this app on your Brightbox web servers"
   task :setup, :roles => :web do
-    sudo "/usr/bin/brightbox-apache -n #{application} -d #{domain} -w #{current_path}/public -h #{mongrel_host} -p #{mongrel_port} -s #{mongrel_servers}"
+    sudo "/usr/bin/brightbox-apache -n #{application} -d #{domain} -a #{domain_aliases} -w #{current_path}/public -h #{mongrel_host} -p #{mongrel_port} -s #{mongrel_servers}"
     sudo "/usr/sbin/apache2ctl -t"
   end
 
