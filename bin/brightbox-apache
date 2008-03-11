@@ -11,7 +11,8 @@ require 'fileutils'
 @alises = ''
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: #{$0} [options] [args]"
+  opts.banner = "brightbox-apache creates an Apache config for a Rails app\n"
+  opts.banner << "Usage: #{$0} [options] [args]"
 
   opts.on("-n", "--name APPLICATION_NAME",
     "Name of application (a short useful name for the app such as 'myforum')"
@@ -22,8 +23,8 @@ OptionParser.new do |opts|
   opts.on("-d", "--domain DOMAIN_NAME",
     "Domain name for application (e.g: www.example.com)"
   ) { |value| @domain = value }
-  opts.on("-a", "--aliases DOMAIN_NAME_ALIASES",
-    "Aliases for domain name, comma separated (e.g: www.example.org)"
+  opts.on("-a", "--aliases ALIASES",
+    "Aliases for domain name, comma separated (e.g: www.example.org,www.example.net)"
   ) { |value| @aliases = value.to_s.split(',').join(' ')}
   opts.on("-p", "--port MONGREL_PORT",
     "Port of the first mongrel sevice"
