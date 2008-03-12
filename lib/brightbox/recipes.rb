@@ -1,5 +1,5 @@
 require 'mongrel_cluster/recipes'
-Capistrano.configuration(:must_exist).load do
+Capistrano::Configuration.instance(true).load do
 
 namespace :apache do
   desc "Reload Apache on your Brightbox web servers"
@@ -55,20 +55,22 @@ namespace :monit do
     sudo "/etc/init.d/monit restart"
   end
 
-  namespace :mongrel
-    desc "Restart the mongrel servers using monit"
-    task :restart_cluster, :roles => :app do
-      sudo "/usr/sbin/monit -g #{application} restart all"
-    end
+  namespace :mongrel do
+    namespace :cluster do
+      desc "Restart the mongrel servers using monit"
+      task :restart, :roles => :app do
+        sudo "/usr/sbin/monit -g #{application} restart all"
+      end
 
-    desc "Start the mongrel servers using monit"
-    task :start_cluster, :roles => :app do
-      sudo "/usr/sbin/monit -g #{application} start all"
-    end
+      desc "Start the mongrel servers using monit"
+      task :start, :roles => :app do
+        sudo "/usr/sbin/monit -g #{application} start all"
+      end
 
-    desc "Stop the mongrel servers using monit"
-    task :stop_cluster, :roles => :app do
-      sudo "/usr/sbin/monit -g #{application} stop all"
+      desc "Stop the mongrel servers using monit"
+      task :stop, :roles => :app do
+        sudo "/usr/sbin/monit -g #{application} stop all"
+      end
     end
   end
 end
@@ -85,16 +87,16 @@ deploy.task :cold do
   migrate
   apache.configure
   apache.reload  
-  mongrel.configure_cluster
+  mongrel.cluster.configure
   monit.configure
   monit.reload
-  monit.mongrel.start_cluster
+  monit.mongrel.cluster.start
   logrotation.configure
 end
 
 desc "Create all the configs on the Brightbox (overwriting any existing) - does not restart services"
 deploy.task :reconfigure do
-  mongrel.configure_cluster
+  mongrel.cluster.configure
   monit.configure
   apache.configure
   logrotation.configure
@@ -102,7 +104,7 @@ end
 
 desc "Fully restarts all services - will affect other apps on the the box "
 deploy.task :full_restart do
-  mongrel.restart_cluster  
+  mongrel.cluster.restart
   apache.restart
   monit.restart
 end
@@ -113,7 +115,7 @@ deploy.task :default do
     deploy.update_code
     web.disable
     symlink
-    monit.mongrel.restart_cluster
+    monit.mongrel.cluster.restart
   end
 
   web.enable
@@ -126,7 +128,7 @@ deploy.task :migrations do
     web.disable
     symlink
     migrate
-    monit.mongrel.restart_cluster
+    monit.mongrel.cluster.restart
   end
 
   web.enable
@@ -173,4 +175,6 @@ def read_db_config
     if db_name !~ /^#{db_user}\_/
       logger.important "WARNING: Database name is not prefixed with MySQL username as per the Brightbox requirements"
     end
+end
+
 end
