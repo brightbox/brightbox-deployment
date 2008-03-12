@@ -1,0 +1,53 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'optparse'
+require 'erb'
+require 'fileutils'
+
+@size = '100M'
+@keep = '10'
+
+OptionParser.new do |opts|
+  opts.banner = "brightbox-logrotate creates a logrotate config for a Rails app\n"
+  opts.banner << "Usage: #{$0} [options] [args]"
+
+  opts.on("-n", "--name APPLICATION_NAME",
+    "Name of application (a short useful name for the app such as 'myforum')"
+  ) { |value| @application = value }
+  opts.on("-l", "--logdir LOG_DIR",
+    "Full path to the directory containing the rails logs (e.g: /home/rails/myforum/current/log)"
+  ) { |value| @logdir = value }
+  opts.on("-s", "--size MAX_LOG_SIZE",
+    "When the current log file reaches this size, rotate it (e.g: 100M, 1G). Default: #{@size}"
+  ) { |value| @size = value }
+  opts.on("-k", "--keep PERIOD_TO_KEEP",
+    "Number of previous compressed logs to keep (default: #{@keep})"
+  ) { |value| @keep = value }
+ 
+  if ARGV.empty? or @application.nil? or @logdir.nil?
+    puts opts
+      exit
+  else
+    opts.parse!(ARGV)
+  end
+end
+
+
+TEMPLATE = <<EOT
+# Created by brightbox-logrotate at <%= Time.now %>
+<%= @logdir %>/*.log {
+  compress
+  size <%= @size %>
+  rotate <%= @keep %>
+  missingok
+  compress
+  copytruncate
+}
+EOT
+
+template = ERB.new(TEMPLATE)
+config = template.result
+filename = "/etc/logrotate.d/rails-#{@application}"
+
+File.open(filename, "w") { |f| f.write config }
