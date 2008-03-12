@@ -4,22 +4,33 @@ Capistrano.configuration(:must_exist).load do
 namespace :apache do
   desc "Reload Apache on your Brightbox web servers"
   task :reload, :roles => :web do
-    sudo "/usr/sbin/apache2ctl -t"
+    
     sudo "/usr/sbin/apache2ctl graceful"
   end
 
   desc "Create Apache config for this app on your Brightbox web servers"
-  task :setup, :roles => :web do
+  task :configure, :roles => :web do
     sudo "/usr/bin/brightbox-apache -n #{application} -d #{domain} -a #{domain_aliases} -w #{current_path}/public -h #{mongrel_host} -p #{mongrel_port} -s #{mongrel_servers}"
-    sudo "/usr/sbin/apache2ctl -t"
   end
   
   desc "Restart Apache on your Brightbox web servers"
   task :restart, :roles => :web do
-    sudo "/usr/sbin/apache2ctl -t"
+    apache.check_config
     sudo "/etc/init.d/apache2 restart"
   end
+  
+  desc "Checks the Apache configuration for errors"
+  task :check_config do
+    sudo "/usr/sbin/apache2ctl -t"
+  end
 
+end
+
+namespace :logrotation do
+  desc "Configure log rotation for this app"
+  task :configure, :roles => :app do
+    sudo "/usr/bin/brightbox-logrotate -n #{application} -l #{log_dir} -s #{log_max_size} -k #{log_keep}"
+  end
 end
 
 namespace :monit do
@@ -69,15 +80,31 @@ deploy.task :cold do
     deploy.symlink
   end
 
-  mysql.create_database # Fails and stops here if db already exists
-  load_schema # WARNING: This wipes any existing tables
+  mysql.create_database # Keeps going if this fails
+  load_schema
   migrate
+  apache.configure
+  apache.reload  
   mongrel.configure_cluster
   monit.configure
   monit.reload
   monit.mongrel.start_cluster
-  apache.setup
-  apache.reload
+  logrotation.configure
+end
+
+desc "Create all the configs on the Brightbox (overwriting any existing) - does not restart services"
+deploy.task :reconfigure do
+  mongrel.configure_cluster
+  monit.configure
+  apache.configure
+  logrotation.configure
+end
+
+desc "Fully restarts all services - will affect other apps on the the box "
+deploy.task :full_restart do
+  mongrel.restart_cluster  
+  apache.restart
+  monit.restart
 end
 
 desc "Deploy the app to your Brightbox servers"
@@ -105,9 +132,17 @@ deploy.task :migrations do
   web.enable
 end
 
-desc "Load the rails db schema on the primary db server"
+desc "Load the rails db schema on the primary db server - WILL WIPE EXISTING TABLES"
 task :load_schema, :roles => :db, :primary => true do
-  run "cd #{current_path} && #{rake} RAILS_ENV=#{(rails_env||"production").to_s} db:schema:load"
+  set(:confirm) do
+    Capistrano::CLI.ui.ask "load_schema will WIPE any existing tables in your database, type yes if you are you sure: "
+  end
+  if confirm == 'yes'
+    logger.important "Loading schema"
+    run "cd #{current_path} && #{rake} RAILS_ENV=#{(rails_env||"production").to_s} db:schema:load"
+  else
+    logger.important "Skipping load_schema"
+  end
 end
 
 namespace :mysql do
@@ -115,7 +150,7 @@ namespace :mysql do
   task :create_database, :roles => :db, :primary => true do
     read_db_config
     if db_adapter == 'mysql'
-      run "mysql -h #{db_host} --user=#{db_user} -p --execute=\"CREATE DATABASE #{db_name}\"" do |channel, stream, data|
+      run "mysql -h #{db_host} --user=#{db_user} -p --execute=\"CREATE DATABASE #{db_name}\" || true" do |channel, stream, data|
         if data =~ /^Enter password:/
           logger.info data, "[database on #{channel[:host]} asked for password]"
           channel.send_data "#{db_password}\n" 
