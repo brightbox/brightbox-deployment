@@ -20,7 +20,7 @@ namespace :apache do
   end
   
   desc "Checks the Apache configuration for errors"
-  task :check_config do
+  task :check_config, :roles => :web do
     sudo "/usr/sbin/apache2ctl -t"
   end
 
@@ -173,6 +173,4 @@ def read_db_config
     if db_name !~ /^#{db_user}\_/
       logger.important "WARNING: Database name is not prefixed with MySQL username as per the Brightbox requirements"
     end
-end
-
 end
