@@ -10,7 +10,7 @@ require 'optparse'
 
 @options = {}
 OptionParser.new do |opts|
-  opts.banner = "The brightbox command sets up your Rails application for deployment"
+  opts.banner = "The brightbox command sets up your Rails application for deployment\n"
   opts.banner << "Usage: #{$0} [options] [args]"
 
   opts.on("-A", "--apply-to DIRECTORY",
@@ -27,11 +27,16 @@ OptionParser.new do |opts|
     "Hostname or IP address of your Brightbox virtual server (e.g: example-001.vm.brightbox.net)"
   ) { |value| @options[:server] = value }
  
-  if ARGV.empty? or @options[:apply_to].nil? or @options[:application].nil? or @options[:domain].nil? or @options[:server].nil?
+  if ARGV.empty?
     puts opts
       exit
   else
     opts.parse!(ARGV)
+    if @options[:apply_to].nil? or @options[:application].nil? or @options[:domain].nil? or @options[:server].nil?
+      puts "All options are needed!"
+      puts opts
+      exit
+    end
   end
 end
 
