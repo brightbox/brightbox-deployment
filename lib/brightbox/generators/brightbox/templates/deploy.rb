@@ -5,7 +5,7 @@ require 'brightbox/recipes'
 # and Apache configs. Should be unique on the Brightbox
 set :application, "<%= singular_name %>"
 
-# Login user for ssh on your Brightbox server
+# Login user for ssh on your Brightbox server(s)
 set :user, "rails"
 
 # Target directory for the application on the web and app servers.
@@ -18,7 +18,7 @@ set :domain_aliases, ""
 
 # URL of your source repository. This is the default one that comes on 
 # every Brightbox, you can use your own (we'll let you :)
-set :repository, "svn+ssh://<%= server %>/home/rails/subversion/<%= singular_name %>/trunk"
+set :repository, "svn+ssh://rails@<%= server %>/home/rails/subversion/<%= singular_name %>/trunk"
 
 # set :scm, :subversion
 # set :scm_username, "rails"
@@ -49,6 +49,8 @@ set :log_keep, "10"
 # set :cvs, "/path/to/cvs"       # defaults to searching the PATH
 # set :gateway, "gate.host.com"  # default to no gateway
 
-# set :ssh_options, { :keys => %w(/path/to/my/key /path/to/another/key) }
+ssh_options[:forward_agent] = true
+ssh_options[:port] = 22
+# ssh_options[:keys] = %w(/path/to/my/key /path/to/another/key)
 
 
