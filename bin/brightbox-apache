@@ -6,34 +6,39 @@ require 'erb'
 require 'fileutils'
 
 @mongrelhost = "127.0.0.1"
-@port = 9200
 @mongrels = 2
-@alises = ''
+@aliases = ''
 
 OptionParser.new do |opts|
   opts.banner = "brightbox-apache creates an Apache config for a Rails app\n"
   opts.banner << "Usage: #{$0} [options] [args]"
 
-  opts.on("-n", "--name APPLICATION_NAME",
+  opts.on("-nAPPLICATION_NAME", "--name APPLICATION_NAME",
     "Name of application (a short useful name for the app such as 'myforum')"
   ) { |value| @application = value }
-  opts.on("-w", "--webroot WEB_ROOT",
+  
+  opts.on("-wWEB_ROOT", "--webroot WEB_ROOT",
     "Full path to web root (e.g: /home/rails/myforum/current/public)"
   ) { |value| @webroot = value }
-  opts.on("-d", "--domain DOMAIN_NAME",
+  
+  opts.on("-dDOMAIN_NAME", "--domain DOMAIN_NAME",
     "Domain name for application (e.g: www.example.com)"
   ) { |value| @domain = value }
+  
   opts.on("-a", "--aliases ALIASES",
     "Aliases for domain name, comma separated (e.g: www.example.org,www.example.net)"
   ) { |value| @aliases = value.to_s.split(',').join(' ')}
+  
   opts.on("-p", "--port MONGREL_PORT",
     "Port of the first mongrel service"
   ) { |value| @port = value.to_i }
+  
   opts.on("-s", "--servers MONGRELS",
-    "Number of mongrel servers running"
+    "Number of mongrel servers running (default: #{@mongrelhost})"
   ) { |value| @mongrels = value.to_i }
+  
   opts.on("-h", "--mongrelhost MONGREL_HOST",
-    "ip/host where mongrel is running (usually 127.0.0.1)"
+    "ip/host where mongrel is running (default: #{@mongrelhost})"
   ) { |value| @mongrelhost = value }
  
   if ARGV.empty?
@@ -41,6 +46,10 @@ OptionParser.new do |opts|
       exit
   else
     opts.parse!(ARGV)
+    if @port.nil? or @application.nil? or @domain.nil? or @application.nil? or @webroot.nil?
+      puts "required option missing"
+      exit 1
+    end
   end
 end
 
