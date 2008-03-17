@@ -1,21 +1,28 @@
 require 'mongrel_cluster/recipes'
 Capistrano::Configuration.instance(true).load do
 
+set :rails_env, "production"  
+set :rake, "/usr/bin/rake"
+set :mongrel_pid_file, "log/mongrel.pid"
+
+# The size at which to rotate a log
+set :log_max_size, "100M"
+# How many old compressed logs to keep
+set :log_keep, "10"
+
 namespace :apache do
   desc "Reload Apache on your Brightbox web servers"
-  task :reload, :roles => :web do
-    
+  task :reload, :roles => :web do 
     sudo "/usr/sbin/apache2ctl graceful"
   end
 
   desc "Create Apache config for this app on your Brightbox web servers"
   task :configure, :roles => :web do
-    sudo "/usr/bin/brightbox-apache -n #{application} -d #{domain} -a #{domain_aliases} -w #{current_path}/public -h #{mongrel_host} -p #{mongrel_port} -s #{mongrel_servers}"
+    sudo "/usr/bin/brightbox-apache -n #{fetch(:application)} -d #{fetch(:domain)} -a '#{fetch(:domain_aliases)}' -w #{fetch(:current_path)}/public -h #{fetch(:mongrel_host)} -p #{fetch(:mongrel_port)} -s #{fetch(:mongrel_servers)}"
   end
   
   desc "Restart Apache on your Brightbox web servers"
   task :restart, :roles => :web do
-    apache.check_config
     sudo "/etc/init.d/apache2 restart"
   end
   
@@ -29,15 +36,17 @@ end
 namespace :logrotation do
   desc "Configure log rotation for this app"
   task :configure, :roles => :app do
-    sudo "/usr/bin/brightbox-logrotate -n #{application} -l #{log_dir} -s #{log_max_size} -k #{log_keep}"
+    sudo "/usr/bin/brightbox-logrotate -n #{fetch(:application)} -l #{fetch(:log_dir)} -s #{fetch(:log_max_size)} -k #{fetch(:log_keep)}"
   end
 end
 
 namespace :monit do
-  desc "Configure monit to handle the mongrel servers for this app"
+  
+  desc "Configure monit to manage this app"
   task :configure, :roles => :app do
-    sudo "/usr/bin/brightbox-monit -n #{application} -r #{current_path} -p #{mongrel_port} -s #{mongrel_servers} -h #{mongrel_host}"
+    mongrel.cluster.confgure
   end
+
   
   desc "Display the monit status summary"
   task :status, :roles => :app do
@@ -53,23 +62,29 @@ namespace :monit do
   desc "Restart the monit daemon"
   task :restart, :roles => :app do
     sudo "/etc/init.d/monit restart"
+    sleep 5
   end
 
   namespace :mongrel do
     namespace :cluster do
       desc "Restart the mongrel servers using monit"
       task :restart, :roles => :app do
-        sudo "/usr/sbin/monit -g #{application} restart all"
+        sudo "/usr/sbin/monit -g #{fetch(:application)} restart all"
       end
 
       desc "Start the mongrel servers using monit"
       task :start, :roles => :app do
-        sudo "/usr/sbin/monit -g #{application} start all"
+        sudo "/usr/sbin/monit -g #{fetch(:application)} start all"
       end
 
       desc "Stop the mongrel servers using monit"
       task :stop, :roles => :app do
-        sudo "/usr/sbin/monit -g #{application} stop all"
+        sudo "/usr/sbin/monit -g #{fetch(:application)} stop all"
+      end
+      
+      desc "Configure monit to manage the mongrel cluster for this app"
+      task :configure, :roles => :app do
+        sudo "/usr/bin/brightbox-monit -n #{fetch(:application)} -r #{fetch(:current_path)} -p #{fetch(:mongrel_port)} -s #{fetch(:mongrel_servers)} -h #{fetch(:mongrel_host)}"
       end
     end
   end
@@ -77,13 +92,14 @@ end
 
 desc "Deploy the app to your Brightbox servers for the FIRST TIME.  Sets up Apache config, creates MySQL database and starts Mongrel."
 deploy.task :cold do
+  gems.brightbox.check
   transaction do
     deploy.update_code
     deploy.symlink
   end
 
   mysql.create_database # Keeps going if this fails
-  load_schema
+  load_schema # Will prompt for confirmation
   migrate
   apache.configure
   apache.reload  
@@ -96,11 +112,28 @@ end
 
 desc "Create all the configs on the Brightbox (overwriting any existing) - does not restart services"
 deploy.task :reconfigure do
+  gems.brightbox.check
   mongrel.cluster.configure
   monit.configure
   apache.configure
   logrotation.configure
 end
+
+desc "Restart the app (Mongrel cluster using monit)" do
+deploy.task :restart
+  monit.mongrel.cluster.restart
+end
+
+desc "Stop the app (Mongrel cluster using monit)" do
+deploy.task :stop
+  monit.mongrel.cluster.stop
+end
+
+desc "Start the app (Mongrel cluster using monit)" do
+deploy.task :start
+  monit.mongrel.cluster.start
+end
+
 
 desc "Fully restarts all services - will affect other apps on the the box "
 deploy.task :full_restart do
@@ -137,7 +170,7 @@ end
 desc "Load the rails db schema on the primary db server - WILL WIPE EXISTING TABLES"
 task :load_schema, :roles => :db, :primary => true do
   set(:confirm) do
-    Capistrano::CLI.ui.ask "load_schema will WIPE any existing tables in your database, type yes if you are you sure: "
+    Capistrano::CLI.ui.ask "  !! load_schema will WIPE ANY EXISTING TABLES in your database, type yes if you are you sure: "
   end
   if confirm == 'yes'
     logger.important "Loading schema"
@@ -154,14 +187,51 @@ namespace :mysql do
     if db_adapter == 'mysql'
       run "mysql -h #{db_host} --user=#{db_user} -p --execute=\"CREATE DATABASE #{db_name}\" || true" do |channel, stream, data|
         if data =~ /^Enter password:/
-          logger.info data, "[database on #{channel[:host]} asked for password]"
+          logger.info data, "[mysql on #{channel[:host]} asked for password]"
           channel.send_data "#{db_password}\n" 
         end
       end
     end
   end
 end
+
+namespace :gems do
+  desc "Install the given gem (will prompt)"
+  task :install, :roles => :app do
+    set(:gems_to_install) do
+      Capistrano::CLI.ui.ask "  Gems to install: "
+    end
+    unless gems_to_install.empty?
+      sudo "gem install -y --no-rdoc --no-ri #{gems_to_install}"
+    end
+  end
   
+  namespace :brightbox do
+    desc "Check the version of the Brightbox gem on the servers"
+    task :check, :roles => :app do
+      bb_gem_version = nil
+      run "gem list brightbox" do |channel, stream, data|
+        if data =~ /^brightbox \(([^ ,]+)/
+          bb_gem_version = $1
+        end
+      end
+      if bb_gem_version.nil?
+        logger.important "ERROR: Brightbox gem not found on server"
+        raise Capistrano::CommandError, "ERROR: Brightbox gem not found on server"
+      else
+        logger.info "Brightbox gem version #{bb_gem_version} found on server"
+      end
+    end
+
+      desc "Install the latest Brightbox gem  and it's dependencies on the servers"
+    task :install, :roles => [:app, :web] do
+      sudo "gem install -y --no-rdoc --no-ri brightbox"
+    end    
+  end
+  
+end
+
+# Load the database.yml from the current Rails app
 def read_db_config
     db_config = YAML.load_file('config/database.yml')
     set :db_adapter, db_config[(rails_env||"production").to_s]["adapter"]
