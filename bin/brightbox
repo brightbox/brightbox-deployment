@@ -13,29 +13,31 @@ OptionParser.new do |opts|
   opts.banner = "The brightbox command sets up your Rails application for deployment\n"
   opts.banner << "Usage: #{$0} [options] [args]"
 
-  opts.on("-A", "--apply-to DIRECTORY",
+  opts.on("-ADIRECTORY", "--apply-to DIRECTORY",
     "Create a minimal set of scripts and recipes",
     "for use with capistrano to configure servers."
   ) { |value| @options[:apply_to] = value }
-  opts.on("-n", "--name APPLICATION_NAME",
+  
+  opts.on("-nAPPLICATION_NAME", "--name APPLICATION_NAME",
     "Name of application (a short useful name for the app such as 'myforum')"
   ) { |value| @options[:application] = value }
-  opts.on("-d", "--domain DOMAIN_NAME",
+  
+  opts.on("-dDOMAIN_NAME", "--domain DOMAIN_NAME",
     "Domain name for application (e.g: www.example.com)"
   ) { |value| @options[:domain] = value }
-  opts.on("-i", "--server SERVER_NAME",
+  
+  opts.on("-iSERVER_NAME", "--server SERVER_NAME",
     "Hostname or IP address of your Brightbox virtual server (e.g: example-001.vm.brightbox.net)"
   ) { |value| @options[:server] = value }
  
   if ARGV.empty?
     puts opts
-      exit
+    exit
   else
     opts.parse!(ARGV)
     if @options[:apply_to].nil? or @options[:application].nil? or @options[:domain].nil? or @options[:server].nil?
-      puts "All options are needed!"
-      puts opts
-      exit
+      puts "All arguments are required"
+      exit 1
     end
   end
 end
