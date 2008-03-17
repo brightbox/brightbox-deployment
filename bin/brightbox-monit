@@ -2,10 +2,10 @@
 
 require 'rubygems'
 require 'optparse'
+require 'fileutils'
 require 'erb'
 
 @mongrelhost = "127.0.0.1"
-@port = 9200
 @mongrels = 2
 @railsenv = "production"
 @railsuser = "rails"
@@ -25,7 +25,7 @@ OptionParser.new do |opts|
     "rails environment (default: #{@railsenv})"
   ) { |value| @railsenv = value }
   opts.on("-p", "--port MONGREL_PORT",
-    "Port of the first mongrel service (default: #{@port})"
+    "Port of the first mongrel service (e.g: 9200)"
   ) { |value| @port = value.to_i }
   opts.on("-s", "--servers MONGRELS",
     "Number of mongrel servers running (default: #{@mongrels})"
@@ -40,11 +40,15 @@ OptionParser.new do |opts|
     "The unix group the mongrel process should be started as (default: #{@railsgroup})"
   ) { |value| @railsgroup = value }
  
-  if ARGV.empty? or @railsroot.nil? or @application.nil?
+  if ARGV.empty?
     puts opts
-      exit
+    exit 1
   else
     opts.parse!(ARGV)
+    if @railsroot.nil? or @application.nil? or @port.nil?
+      puts "Required argument missing"
+      exit 1
+    end
   end
 end
 
@@ -55,9 +59,9 @@ TEMPLATE = <<EOT
 <% @mongrel_instances.each do |port, pidfile| %>
 check process mongrel_<%= @application %>_<%= port %> with pidfile <%= pidfile %>
   group <%= @application %>
-  start program = "/usr/bin/mongrel_rails cluster::start -C <%= @railsroot %>config/mongrel_cluster.yml --clean --only <%= port %>"
+  start program = "/usr/bin/mongrel_rails cluster::start -C <%= @railsroot %>/config/mongrel_cluster.yml --clean --only <%= port %>"
     as uid #{@railsuser} and gid #{@railsgroup}
-  stop program = "/usr/bin/mongrel_rails cluster::stop -C <%= @railsroot %>config/mongrel_cluster.yml --clean --only <%= port %>"
+  stop program = "/usr/bin/mongrel_rails cluster::stop -C <%= @railsroot %>/config/mongrel_cluster.yml --clean --only <%= port %>"
     as uid #{@railsuser} and gid #{@railsgroup}
 
   if failed host <%= @mongrelhost %> port <%= port %> protocol http
