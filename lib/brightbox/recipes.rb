@@ -44,7 +44,7 @@ namespace :monit do
   
   desc "Configure monit to manage this app"
   task :configure, :roles => :app do
-    mongrel.cluster.confgure
+    mongrel.cluster.configure
   end
 
   
@@ -56,7 +56,7 @@ namespace :monit do
   desc "Reload the monit daemon"
   task :reload, :roles => :app do
     sudo "/usr/sbin/monit reload"
-    sleep 5
+    sleep 1
   end
   
   desc "Restart the monit daemon"
@@ -89,94 +89,95 @@ namespace :monit do
     end
   end
 end
+namespace :deploy do
+  desc "Deploy the app to your Brightbox servers for the FIRST TIME.  Sets up Apache config, \ncreates MySQL database and starts Mongrel."
+  task :cold do
+    gems.brightbox.check
+    transaction do
+      deploy.update_code
+      deploy.symlink
+    end
 
-desc "Deploy the app to your Brightbox servers for the FIRST TIME.  Sets up Apache config, creates MySQL database and starts Mongrel."
-deploy.task :cold do
-  gems.brightbox.check
-  transaction do
-    deploy.update_code
-    deploy.symlink
-  end
-
-  mysql.create_database # Keeps going if this fails
-  load_schema # Will prompt for confirmation
-  migrate
-  apache.configure
-  apache.reload  
-  mongrel.cluster.configure
-  monit.configure
-  monit.reload
-  monit.mongrel.cluster.start
-  logrotation.configure
-end
-
-desc "Create all the configs on the Brightbox (overwriting any existing) - does not restart services"
-deploy.task :reconfigure do
-  gems.brightbox.check
-  mongrel.cluster.configure
-  monit.configure
-  apache.configure
-  logrotation.configure
-end
-
-desc "Restart the app (Mongrel cluster using monit)" do
-deploy.task :restart
-  monit.mongrel.cluster.restart
-end
-
-desc "Stop the app (Mongrel cluster using monit)" do
-deploy.task :stop
-  monit.mongrel.cluster.stop
-end
-
-desc "Start the app (Mongrel cluster using monit)" do
-deploy.task :start
-  monit.mongrel.cluster.start
-end
-
-
-desc "Fully restarts all services - will affect other apps on the the box "
-deploy.task :full_restart do
-  mongrel.cluster.restart
-  apache.restart
-  monit.restart
-end
-
-desc "Deploy the app to your Brightbox servers"
-deploy.task :default do
-  transaction do
-    deploy.update_code
-    web.disable
-    symlink
-    monit.mongrel.cluster.restart
-  end
-
-  web.enable
-end
-
-desc "Deploy the app to your Brightbox servers and run any outstanding migrations"
-deploy.task :migrations do
-  transaction do
-    deploy.update_code
-    web.disable
-    symlink
+    mysql.create_database # Keeps going if this fails
+    load_schema # Will prompt for confirmation
     migrate
+    apache.configure
+    apache.reload  
+    mongrel.cluster.configure
+    monit.configure
+    monit.reload
+    #monit.mongrel.cluster.start
+    logrotation.configure
+  end
+
+  desc "Create all the configs on the Brightbox (overwriting any existing) - does not restart services"
+  task :reconfigure do
+    gems.brightbox.check
+    mongrel.cluster.configure
+    monit.configure
+    apache.configure
+    logrotation.configure
+  end
+
+  desc "Restart the app (Mongrel cluster using monit)" do
+  task :restart
     monit.mongrel.cluster.restart
   end
 
-  web.enable
-end
-
-desc "Load the rails db schema on the primary db server - WILL WIPE EXISTING TABLES"
-task :load_schema, :roles => :db, :primary => true do
-  set(:confirm) do
-    Capistrano::CLI.ui.ask "  !! load_schema will WIPE ANY EXISTING TABLES in your database, type yes if you are you sure: "
+  desc "Stop the app (Mongrel cluster using monit)" do
+  task :stop
+    monit.mongrel.cluster.stop
   end
-  if confirm == 'yes'
-    logger.important "Loading schema"
-    run "cd #{current_path} && #{rake} RAILS_ENV=#{(rails_env||"production").to_s} db:schema:load"
-  else
-    logger.important "Skipping load_schema"
+
+  desc "Start the app (Mongrel cluster using monit)" do
+  task :start
+    monit.mongrel.cluster.start
+  end
+
+
+  desc "Fully restarts all services - will affect other apps on the the box "
+  task :full_restart do
+    mongrel.cluster.restart
+    apache.restart
+    monit.restart
+  end
+
+  desc "Deploy the app to your Brightbox servers"
+  task :default do
+    transaction do
+      deploy.update_code
+      web.disable
+      symlink
+      monit.mongrel.cluster.restart
+    end
+
+    web.enable
+  end
+
+  desc "Deploy the app to your Brightbox servers and run any outstanding migrations"
+  task :migrations do
+    transaction do
+      deploy.update_code
+      web.disable
+      symlink
+      migrate
+      monit.mongrel.cluster.restart
+    end
+
+    web.enable
+  end
+
+  desc "Load the rails db schema on the primary db server - WILL WIPE EXISTING TABLES"
+  task :load_schema, :roles => :db, :primary => true do
+    set(:confirm) do
+      Capistrano::CLI.ui.ask "  !! load_schema will WIPE ANY EXISTING TABLES in your database, type yes if you are you sure: "
+    end
+    if confirm == 'yes'
+      logger.important "Loading schema"
+      run "cd #{fetch(:current_path)} && #{fetch(:rake)} RAILS_ENV=#{(fetch(:rails_env)||"production").to_s} db:schema:load"
+    else
+      logger.important "Skipping load_schema"
+    end
   end
 end
 
@@ -185,7 +186,7 @@ namespace :mysql do
   task :create_database, :roles => :db, :primary => true do
     read_db_config
     if db_adapter == 'mysql'
-      run "mysql -h #{db_host} --user=#{db_user} -p --execute=\"CREATE DATABASE #{db_name}\" || true" do |channel, stream, data|
+      run "mysql -h #{db_host} --user=#{db_user} -p --execute=\"CREATE DATABASE #{db_name}\" || echo 'Failed, db may already exist' && true" do |channel, stream, data|
         if data =~ /^Enter password:/
           logger.info data, "[mysql on #{channel[:host]} asked for password]"
           channel.send_data "#{db_password}\n" 
