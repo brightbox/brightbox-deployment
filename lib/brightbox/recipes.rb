@@ -170,7 +170,7 @@ namespace :deploy do
   desc "Load the rails db schema on the primary db server - WILL WIPE EXISTING TABLES"
   task :load_schema, :roles => :db, :primary => true do
     set(:confirm) do
-      Capistrano::CLI.ui.ask "  !! load_schema will WIPE ANY EXISTING TABLES in your database, type yes if you are you sure: "
+      Capistrano::CLI.ui.ask "  !! load_schema will WIPE ANY EXISTING TABLES in the database configured on the server, type yes if you are you sure: "
     end
     if confirm == 'yes'
       logger.important "Loading schema"
@@ -186,7 +186,7 @@ namespace :mysql do
   task :create_database, :roles => :db, :primary => true do
     read_db_config
     if db_adapter == 'mysql'
-      run "mysql -h #{db_host} --user=#{db_user} -p --execute=\"CREATE DATABASE #{db_name}\" || echo 'Failed, db may already exist' && true" do |channel, stream, data|
+      run "mysql -h #{db_host} --user=#{db_user} -p --execute=\"CREATE DATABASE #{db_name}\" || true" do |channel, stream, data|
         if data =~ /^Enter password:/
           logger.info data, "[mysql on #{channel[:host]} asked for password]"
           channel.send_data "#{db_password}\n" 
