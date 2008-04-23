@@ -9,6 +9,11 @@ require 'fileutils'
 @mongrels = 2
 @aliases = ''
 
+def has_required_options?
+  [@application, @aliases, @mongrelhost, @mongrels, @webroot, @domain,
+    @port].all?
+end
+
 OptionParser.new do |opts|
   opts.banner = "brightbox-apache creates an Apache config for a Rails app\n"
   opts.banner << "Usage: #{$0} [options] [args]"
@@ -34,22 +39,21 @@ OptionParser.new do |opts|
   ) { |value| @port = value.to_i }
   
   opts.on("-s", "--servers MONGRELS",
-    "Number of mongrel servers running (default: #{@mongrelhost})"
+    "Number of mongrel servers running (default: #{@mongrels})"
   ) { |value| @mongrels = value.to_i }
   
   opts.on("-h", "--mongrelhost MONGREL_HOST",
     "ip/host where mongrel is running (default: #{@mongrelhost})"
   ) { |value| @mongrelhost = value }
  
-  if ARGV.empty?
+  begin
+    opts.parse(ARGV)
+    raise OptionParser::ParseError,
+      "You must supply the required arguments" unless has_required_options?
+  rescue OptionParser::ParseError => e
+    warn e.message
     puts opts
-      exit
-  else
-    opts.parse!(ARGV)
-    if @port.nil? or @application.nil? or @domain.nil? or @application.nil? or @webroot.nil?
-      puts "required option missing"
-      exit 1
-    end
+    exit 1
   end
 end
 

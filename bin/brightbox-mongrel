@@ -1,0 +1,59 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'optparse'
+require 'fileutils'
+require 'erb'
+
+@mongrelhost = "127.0.0.1"
+@mongrels = 2
+@railsenv = "production"
+@pidfile = "log/mongrel.pid"
+
+def has_required_options?
+  [@application, @config, @pidfile, @port, @mongrels, @railsenv, @railsroot, @mongrelhost].all?
+end
+
+OptionParser.new do |opts|
+  opts.banner = "brightbox-mongrel creates a Mongrel config for a Rails app\n"
+  opts.banner << "Usage: #{$0} [options] [args]"
+
+  opts.on("-n", "--name APPLICATION_NAME",
+    "Name of application (a short useful name for the app such as: myforum)"
+  ) { |value| @application = value }
+  opts.on("-r", "--railsroot RAILS_ROOT",
+    "Full path to rails root (e.g: /home/rails/myforum/current)"
+  ) { |value| @railsroot = value }
+  opts.on("-C", "--config MONGREL_CONFIG_FILE",
+    "Location of this application's mongrel config file"
+  ) { |value| @config = value }
+  opts.on("-e", "--railsenv RAILS_ENV",
+    "rails environment (default: #{@railsenv})"
+  ) { |value| @railsenv = value }
+  opts.on("-p", "--port MONGREL_PORT",
+    "Port of the first mongrel service (e.g: 9200)"
+  ) { |value| @port = value.to_i }
+  opts.on("-s", "--servers MONGRELS",
+    "Number of mongrel servers running (default: #{@mongrels})"
+  ) { |value| @mongrels = value.to_i }
+  opts.on("-h", "--mongrelhost MONGREL_HOST",
+    "IP/host where mongrel is running (default: #{@mongrelhost})"
+  ) { |value| @mongrelhost = value }    
+  opts.on("-P", "--pidfile MONGREL_PID_FILE",
+    "Name of Mongrel PID file template (default: #{@pidfile})"
+  ) { |value| @pidfile = value }    
+ 
+  begin
+    opts.parse(ARGV)
+    raise OptionParser::ParseError,
+      "You must supply the required arguments" unless has_required_options?
+  rescue OptionParser::ParseError => e
+    warn e.message
+    puts opts
+    exit 1
+  end
+end
+
+command = %Q{ mongrel_rails cluster::configure -N #{@mongrels} -p #{@port} -e #{@railsenv} -a #{@mongrelhost} -c #{@railsroot} -P "#{@pidfile}" -C "#{@config}"}
+puts command
+exec command

@@ -9,38 +9,134 @@ end
 require 'optparse'
 
 @options = {}
-OptionParser.new do |opts|
-  opts.banner = "The brightbox command sets up your Rails application for deployment\n"
-  opts.banner << "Usage: #{$0} [options] [args]"
 
-  opts.on("-ADIRECTORY", "--apply-to DIRECTORY",
-    "Create a minimal set of scripts and recipes",
-    "for use with capistrano to configure servers."
-  ) { |value| @options[:apply_to] = value }
+def has_required_options?
+  [@application, @domain, @server].all?
+end
+
+OptionParser.new do |opts|
+  opts.banner = "Set up your Rails application for deployment\n"
+  opts.banner << "Usage: #{$0} [options] <directory_name>\n\n"
+
+  opts.on("-n APPLICATION_NAME", "--name APPLICATION_NAME",
+    "Name of application (a short useful",
+    "name for the app such as 'myforum')\n"
+  ) { |value| @application = value }
   
-  opts.on("-nAPPLICATION_NAME", "--name APPLICATION_NAME",
-    "Name of application (a short useful name for the app such as 'myforum')"
-  ) { |value| @options[:application] = value }
+  opts.on("-d DOMAIN_NAME", "--domain DOMAIN_NAME",
+    "Domain name for application",
+    "(e.g: www.example.com)\n"
+  ) { |value| @domain = value }
   
-  opts.on("-dDOMAIN_NAME", "--domain DOMAIN_NAME",
-    "Domain name for application (e.g: www.example.com)"
-  ) { |value| @options[:domain] = value }
-  
-  opts.on("-iSERVER_NAME", "--server SERVER_NAME",
-    "Hostname or IP address of your Brightbox virtual server (e.g: example-001.vm.brightbox.net)"
-  ) { |value| @options[:server] = value }
- 
-  if ARGV.empty?
+  opts.on("-i SERVER_NAME", "--server SERVER_NAME",
+    "Hostname or IP address of your",
+    "Brightbox virtual server",
+    "(e.g: example-001.vm.brightbox.net)\n"
+  ) { |value| @server = value }
+
+  opts.on_tail("-h", "--help", "Displays this help page") do
     puts opts
-    exit
-  else
+    exit 0
+  end
+ 
+  begin
     opts.parse!(ARGV)
-    if @options[:apply_to].nil? or @options[:application].nil? or @options[:domain].nil? or @options[:server].nil?
-      puts "All arguments are required"
-      exit 1
-    end
+    raise OptionParser::ParseError,
+      "You must supply all of the arguments" unless has_required_options?
+  rescue OptionParser::ParseError => e
+    warn e.message
+    puts opts
+    exit 1
   end
 end
 
-require 'brightbox/generators/loader'
-Brightbox::Generators::RailsLoader.load! @options
+@progname = File.basename($0)
+
+abort "Please specify the directory containing the Rails app, e.g. '#{@progname} .'" if ARGV.empty?
+abort "Too many arguments; please provide a single directory name." unless ARGV.length == 1
+abort "'#{ARGV.first}' does not exist." unless File.exists?(ARGV.first)
+abort "'#{ARGV.first}' is not a directory." unless File.directory?(ARGV.first)
+
+def unindent(string)
+  indentation = string[/\A\s*/]
+  string.strip.gsub(/^#{indentation}/, "")
+end
+
+files = {
+  "Capfile" => unindent(<<-FILE),
+    # Generated with '#{@progname}' on #{Time.now}
+    load 'deploy' if respond_to?(:namespace) # cap2 differentiator
+    Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
+    load 'config/deploy'
+  FILE
+
+"config/deploy.rb" => unindent(<<-FILE),
+    require 'brightbox/recipes'
+    ## Generated with '#{@progname}' on #{Time.now}
+
+    # The name of your application.  Used for deployment directory and filenames
+    # and Apache configs. Should be unique on the Brightbox
+    set :application, "#{@application}"
+
+    # Primary domain name of your application. Used in the Apache configs
+    set :domain, "#{@domain}"
+
+    ## List of servers
+    server "#{@server}", :app, :web, :db, :primary => true
+
+    # Target directory for the application on the web and app servers.
+    set(:deploy_to) { File.join("/home", user, application) }
+
+    # URL of your source repository. This is the default one that comes on 
+    # every Brightbox, you can use your own (we'll let you :)
+    set(:repository) { "svn+ssh://\#{user}@#{@server}/home/\#{user}/subversion/\#{application}/trunk" }
+
+    ### Other options you can set ##
+    # Comma separated list of additional domains for Apache
+    # set :domain_aliases, "www.example.com,dev.example.com"
+
+    ## Logrotation
+    # Where the logs are stored. Defaults to <shared_path>/log
+    #set :log_dir, "central/log/path"
+    # The size at which to rotate a log. e.g 1G, 100M, 5M. Defaults to 100M
+    #set :log_max_size, "100M"
+    # How many old compressed logs to keep. Defaults to 10
+    #set :log_keep, "10"
+
+    ## Version Control System
+    # Which version control system. Defaults to subversion
+    # set :scm, :git
+    # set :scm_username, "rails"
+    # set :scm_password, "mysecret"
+
+    ## Mongrel settings
+    # Host where mongrel lives. Defaults to the app server
+    # set :mongrel_host, "127.0.0.1"
+    # Port number where mongrel starts. Defaults to 9200
+    # set :mongrel_port, 9200
+    # Number of mongrel servers to start. Defaults to 2
+    #set :mongrel_servers, 2
+
+    ## Dependencies
+    # Set the commands and gems that your application requires. e.g.
+    # depend :remote, :gem, "will_paginate", ">=2.2.2"
+    # depend :remote, :command, "brightbox"
+  FILE
+}
+
+base = ARGV.shift
+files.each do |file, content|
+  file = File.join(base, file)
+  if File.exists?(file)
+    warn "[skip] `#{file}' already exists"
+  elsif File.exists?(file.downcase)
+    warn "[skip] `#{file.downcase}' exists, which could conflict with `#{file}'"
+  elsif !File.exists?(File.dirname(file))
+    warn "[skip] directory `#{File.dirname(file)}' does not exist"
+  else
+    puts "[add] writing `#{file}'"
+    File.open(file, "w") { |f| f.write(content) }
+  end
+end
+
+puts "[done] ready for deployment!"

@@ -10,6 +10,11 @@ require 'erb'
 @railsenv = "production"
 @railsuser = "rails"
 @railsgroup = "rails"
+@pidfile = "log/mongrel.pid"
+
+def has_required_options?
+  [@railsuser, @railsgroup, @application, @config, @pidfile, @port, @mongrels, @railsenv, @railsroot, @mongrelhost].all?
+end
 
 OptionParser.new do |opts|
   opts.banner = "brightbox-monit creates a Monit config for a Rails app\n"
@@ -21,6 +26,9 @@ OptionParser.new do |opts|
   opts.on("-r", "--railsroot RAILS_ROOT",
     "Full path to rails root (e.g: /home/rails/myforum/current)"
   ) { |value| @railsroot = value }
+  opts.on("-C", "--config MONGREL_CONFIG_FILE",
+    "Location of this application's mongrel config file"
+  ) { |value| @config = value }
   opts.on("-e", "--railsenv RAILS_ENV",
     "rails environment (default: #{@railsenv})"
   ) { |value| @railsenv = value }
@@ -36,32 +44,52 @@ OptionParser.new do |opts|
   opts.on("-u", "--user USERNAME",
     "The unix username the mongrel process should be started as (default: #{@railsuser})"
   ) { |value| @railsuser = value }
-  opts.on("-u", "--group USERNAME",
+  opts.on("-g", "--group USERNAME",
     "The unix group the mongrel process should be started as (default: #{@railsgroup})"
   ) { |value| @railsgroup = value }
+  opts.on("-P", "--pidfile MONGREL_PID_FILE",
+    "Name of Mongrel PID file template (default: #{@pidfile})"
+  ) { |value| @pidfile = value }    
  
-  if ARGV.empty?
+  begin
+    opts.parse(ARGV)
+    raise OptionParser::ParseError,
+      "You must supply the required arguments" unless has_required_options?
+  rescue OptionParser::ParseError => e
+    warn e.message
     puts opts
     exit 1
-  else
-    opts.parse!(ARGV)
-    if @railsroot.nil? or @application.nil? or @port.nil?
-      puts "Required argument missing"
-      exit 1
-    end
   end
 end
 
-@mongrel_instances = (@port..@port+@mongrels-1).collect { |port| [port, "#{@railsroot}/log/mongrel.#{port}.pid"] }
+def process_pid_file
+  @pid_file_ext = File.extname(@pidfile)
+  @pid_file_base = File.basename(@pidfile, @pid_file_ext)
+  @pid_file_dir = File.dirname(@pidfile)
+end
+
+def port_pid_file(port)
+  pid_file = [@pid_file_base, port].join(".") + @pid_file_ext      
+  File.join(@pid_file_dir, pid_file)
+end
+
+def mongrel_ports
+  @port..(@port + @mongrels - 1)
+end
+
+process_pid_file
+@mongrel_instances = mongrel_ports.collect do |port|
+  [port, File.join(@railsroot, port_pid_file(port))]
+end
 
 TEMPLATE = <<EOT
 # Created by brightbox-monit at <%= Time.now %>
 <% @mongrel_instances.each do |port, pidfile| %>
 check process mongrel_<%= @application %>_<%= port %> with pidfile <%= pidfile %>
   group <%= @application %>
-  start program = "/usr/bin/mongrel_rails cluster::start -C <%= @railsroot %>/config/mongrel_cluster.yml --clean --only <%= port %>"
+  start program = "/usr/bin/mongrel_rails cluster::start -C <%= @config %> --clean --only <%= port %>"
     as uid #{@railsuser} and gid #{@railsgroup}
-  stop program = "/usr/bin/mongrel_rails cluster::stop -C <%= @railsroot %>/config/mongrel_cluster.yml --clean --only <%= port %>"
+  stop program = "/usr/bin/mongrel_rails cluster::stop -C <%= @config %> --clean --only <%= port %>"
     as uid #{@railsuser} and gid #{@railsgroup}
 
   if failed host <%= @mongrelhost %> port <%= port %> protocol http
