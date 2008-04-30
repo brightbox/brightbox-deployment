@@ -7,6 +7,7 @@ rescue LoadError
 end
 
 require 'optparse'
+require 'brightbox/database_yml/mysql'
 
 def has_required_options?
   [@application].all?
@@ -32,27 +33,10 @@ def write_file_with_backup(filename)
   FileUtils.cp(tempname, filename)
 end
 
-#Load database.yml file
-def load_database_yml
-  @dbconfig = YAML.load_file(@dbyml_filename)
-  # Deep copy
-  @dborg = YAML.load_file(@dbyml_filename)
-rescue ArgumentError => e
-  warn "Not a valid YAML file"
-  warn e.message
-  exit 2
-end
-
-#Load my.cnf ini file
-require 'ini'
-def load_mycnf
-  @mycnf = Ini.load(File.join(ENV['HOME'], '.my.cnf'))[:client]
-end
-
 #Rewrite the database.yml
 def rewrite_database_yml
   write_file_with_backup(@dbyml_filename) do |file|
-    YAML.dump(@dbconfig, file)
+    @dbfile.dump(file)
   end
 end
 
@@ -89,56 +73,30 @@ def check_arguments
   abort "Please provide the database.yml to check, e.g. '#{@progname} config/database.yml'" if ARGV.empty?
   abort "Too many arguments; please provide a single filename" unless ARGV.length == 1
   @dbyml_filename = ARGV.shift
-  abort "'#{@dbyml_filename}' does not exist." unless File.exists?(@dbyml_filename)
-  abort "'#{@dbyml_filename}' is not a plain file" unless File.file?(@dbyml_filename)
+  abort "'#{@dbyml_filename}' is not a plain file" if File.exists?(@dbyml_filename) && !File.file?(@dbyml_filename)
 end
 
-# For each section if it is mysql pad out the entries
-def augment_database_yml_entries
-  environments.each do |section|
-    current_section = @dbconfig[section] || @dbconfig[section] = {"adapter" => "mysql"}
-    if current_section["adapter"] == "mysql"
-      adapter_settings = @mycnf.merge(current_section) 
-      adapter_settings["database"] ||= "#{adapter_settings["user"]}_#{@application}_#{section}"
-      @dbconfig[section] = adapter_settings
-    end
+def fixup_database_yml
+  @dbfile = Brightbox::DatabaseYml::Mysql.new(@application, @dbyml_filename)
+rescue ArgumentError => e
+  warn "Not a valid YAML file"
+  warn e.message
+  exit 2
+end
+
+def print_errors
+  @dbfile.errors.each do |error|
+    warn error
   end
-end
-
-def check_database_yml_entries
-  environments.each do |section|
-    current = @dbconfig[section]
-    if current["adapter"] == "mysql"
-      username=current["user"]
-      warn "username missing in #{section} section" if username.nil?
-      warn "password missing in #{section} section" if current["password"].nil?
-      if current["host"] =~ /^sqlreadwrite/
-        warn "database name should be prefixed with '#{username}_'" if username && current["database"] !~ /^#{username}_/
-      else
-        warn "host is not pointing at sqlreadwrite in #{section} section" if current["host"] !~ /^sqlreadwrite/
-      end
-    end
-  end
-end
-
-def no_change?
-  @dbconfig == @dborg
-end
-
-def environments
-  %W(development test production)
-end
-
-def extract_adapters
-  @dbconfig.delete_if {|key, value| !environments.include? key }
 end
 
 #Main program
 parse_options
 check_arguments
-load_database_yml
-load_mycnf
-extract_adapters
-augment_database_yml_entries
-check_database_yml_entries
-rewrite_database_yml unless no_change?
+fixup_database_yml
+if @dbfile.errors.empty?
+  rewrite_database_yml if @dbfile.changed?
+else
+  print_errors
+  exit 2
+end

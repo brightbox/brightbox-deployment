@@ -7,7 +7,7 @@
   s.rubyforge_project = 'brightbox'
   s.platform = Gem::Platform::RUBY
   s.summary = "Brightbox rails deployment scripts for Capistrano"
-  s.files = FileList["{bin,lib}/**/*"].to_a
+  s.files = FileList["{bin,lib,spec}/**/*"].to_a
   s.require_path = "lib"
   s.has_rdoc = false
   s.add_dependency("capistrano", ">= 2.1")
