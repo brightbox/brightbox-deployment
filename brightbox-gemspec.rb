@@ -11,6 +11,7 @@
   s.require_path = "lib"
   s.has_rdoc = false
   s.add_dependency("capistrano", ">= 2.1")
+  s.add_dependency("ini", ">= 0.1")
 #  s.add_dependency("mongrel_cluster", ">= 1.0.5")
   s.default_executable = "brightbox"
   s.executables = ["brightbox", "brightbox-apache", "brightbox-monit", "brightbox-logrotate"]

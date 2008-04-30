@@ -1,0 +1,144 @@
+#!/usr/bin/env ruby
+
+begin
+  require 'rubygems'
+rescue LoadError
+  # no rubygems to load, so we fail silently
+end
+
+require 'optparse'
+
+def has_required_options?
+  [@application].all?
+end
+
+def backup_available?(name)
+  !File.exists?(name) ||
+  File.file?(name) && File.stat(name).writable?
+end
+
+require 'tempfile'
+require 'fileutils'
+# Side effect of doing it with temp files is that an altered database.yml ends up with 0600 permissions.
+def write_file_with_backup(filename)
+  backupname = filename + '.bak'
+  tempname = ''
+  abort "Backup file #{File.basename(backupname)} not writable" unless backup_available?(backupname)
+  Tempfile.open(File.basename(filename)) do |file|
+    tempname = file.path 
+    yield file
+  end
+  FileUtils.mv(filename, backupname)
+  FileUtils.cp(tempname, filename)
+end
+
+#Load database.yml file
+def load_database_yml
+  @dbconfig = YAML.load_file(@dbyml_filename)
+  # Deep copy
+  @dborg = YAML.load_file(@dbyml_filename)
+rescue ArgumentError => e
+  warn "Not a valid YAML file"
+  warn e.message
+  exit 2
+end
+
+#Load my.cnf ini file
+require 'ini'
+def load_mycnf
+  @mycnf = Ini.load(File.join(ENV['HOME'], '.my.cnf'))[:client]
+end
+
+#Rewrite the database.yml
+def rewrite_database_yml
+  write_file_with_backup(@dbyml_filename) do |file|
+    YAML.dump(@dbconfig, file)
+  end
+end
+
+def parse_options
+  OptionParser.new do |opts|
+    opts.banner = "Redirects the database.yml file to the Brightbox mysql database\n"
+    opts.banner << "Usage: #{$0} [options] <path_to_database.yml>\n\n"
+
+    opts.on("-n APPLICATION_NAME", "--name APPLICATION_NAME",
+            "Name of application.",
+            "(A short useful name such as 'myforum')") do | value |
+            @application = value
+            end
+
+    opts.on_tail("-h", "--help", "Display this help message") do |opts|
+      puts opts
+      exit 0
+    end
+
+    begin
+      opts.parse!(ARGV)
+      raise OptionParser::ParseError,
+        "You must supply all of the arguments" unless has_required_options?
+    rescue OptionParser::ParseError => e
+      warn e.message
+      puts opts
+      exit 1
+    end
+  end
+end
+
+def check_arguments
+  @progname = File.basename($0)
+  abort "Please provide the database.yml to check, e.g. '#{@progname} config/database.yml'" if ARGV.empty?
+  abort "Too many arguments; please provide a single filename" unless ARGV.length == 1
+  @dbyml_filename = ARGV.shift
+  abort "'#{@dbyml_filename}' does not exist." unless File.exists?(@dbyml_filename)
+  abort "'#{@dbyml_filename}' is not a plain file" unless File.file?(@dbyml_filename)
+end
+
+# For each section if it is mysql pad out the entries
+def augment_database_yml_entries
+  environments.each do |section|
+    current_section = @dbconfig[section] || @dbconfig[section] = {"adapter" => "mysql"}
+    if current_section["adapter"] == "mysql"
+      adapter_settings = @mycnf.merge(current_section) 
+      adapter_settings["database"] ||= "#{adapter_settings["user"]}_#{@application}_#{section}"
+      @dbconfig[section] = adapter_settings
+    end
+  end
+end
+
+def check_database_yml_entries
+  environments.each do |section|
+    current = @dbconfig[section]
+    if current["adapter"] == "mysql"
+      username=current["user"]
+      warn "username missing in #{section} section" if username.nil?
+      warn "password missing in #{section} section" if current["password"].nil?
+      if current["host"] =~ /^sqlreadwrite/
+        warn "database name should be prefixed with '#{username}_'" if username && current["database"] !~ /^#{username}_/
+      else
+        warn "host is not pointing at sqlreadwrite in #{section} section" if current["host"] !~ /^sqlreadwrite/
+      end
+    end
+  end
+end
+
+def no_change?
+  @dbconfig == @dborg
+end
+
+def environments
+  %W(development test production)
+end
+
+def extract_adapters
+  @dbconfig.delete_if {|key, value| !environments.include? key }
+end
+
+#Main program
+parse_options
+check_arguments
+load_database_yml
+load_mycnf
+extract_adapters
+augment_database_yml_entries
+check_database_yml_entries
+rewrite_database_yml unless no_change?
