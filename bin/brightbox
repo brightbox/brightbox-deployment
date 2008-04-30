@@ -16,7 +16,7 @@ end
 
 OptionParser.new do |opts|
   opts.banner = "Set up your Rails application for deployment\n"
-  opts.banner << "Usage: #{$0} [options] <directory_name>\n\n"
+  opts.banner << "Usage: #{File.basename($0)} [options] <directory_name>\n\n"
 
   opts.on("-n APPLICATION_NAME", "--name APPLICATION_NAME",
     "Name of application (a short useful",
