@@ -1,10 +1,13 @@
+
+require 'rubygems'
+require 'yaml'
+require 'ini'
+
 module Brightbox
   module DatabaseYml
   end
 end
-require 'rubygems'
-require 'yaml'
-require 'ini'
+
 class Brightbox::DatabaseYml::Mysql
   attr_reader :errors
 
@@ -28,7 +31,8 @@ class Brightbox::DatabaseYml::Mysql
 private
   def load_database_yml
     if filename_is_missing_but_writable?
-      @dbconfig = {"production" => {}}
+      @dbconfig = {}
+      @dborg = {}
     else
       @dbconfig = YAML.load_file(@filename)
       @dborg = YAML.load_file(@filename)
@@ -50,15 +54,23 @@ private
 
   def generate_entries
     sqlreadwrite_mysql_environments.each do |env|
-      ref = @dbconfig[env]
-      ref["adapter"] = "mysql"
-      ref["host"] = "sqlreadwrite.brightbox.net"
-      ref["username"] ||= @mycnf["user"]
-      ref["password"] ||= @mycnf["password"]
-      ref["database"] ||= "#{ref["username"]}_#{@appname}_#{env}" 
+      augment_entry(env)
       check_entry(env)
     end
+    #We must have production as a minimum
+    @dbconfig["production"] ||= augment_entry("production")
   end
+
+  def augment_entry(env)
+    entry = @dbconfig[env] || {}
+    entry["adapter"] = "mysql"
+    entry["host"] = "sqlreadwrite.brightbox.net"
+    entry["username"] ||= @mycnf["user"]
+    entry["password"] ||= @mycnf["password"]
+    entry["database"] ||= "#{entry["username"]}_#{@appname}_#{env}" 
+  end
+
+
 
   def check_entry(env)
     ref = @dbconfig[env]
@@ -84,7 +96,7 @@ private
     @dbconfig.keys.select do |key|
       ref = @dbconfig[key]
       sqlreadwrite_mysql_env?(ref)
-    end
+    end 
   end
 
   def load_my_cnf_ini

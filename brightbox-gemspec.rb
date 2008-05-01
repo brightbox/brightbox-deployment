@@ -14,5 +14,5 @@
   s.add_dependency("ini", ">= 0.1")
 #  s.add_dependency("mongrel_cluster", ">= 1.0.5")
   s.default_executable = "brightbox"
-  s.executables = %W(brightbox brightbox-mysql brightbox-mongrel brightbox-apache brightbox-monit brightbox-logrotate)
+  s.executables = %W(brightbox brightbox-mysql brightbox-mongrel brightbox-apache brightbox-monit brightbox-logrotate brightbox-ssh)
 end

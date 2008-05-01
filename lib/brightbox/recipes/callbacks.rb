@@ -7,11 +7,12 @@
 # Hook tasks into the standard deployment system
 
 after "deploy:setup",
- "configure:logrotation",
- "configure:monit",
- "configure:mongrel",
- "configure:apache",
- "deploy:monit:reload"
+  "configure:known_hosts",
+  "configure:logrotation",
+  "configure:monit",
+  "configure:mongrel",
+  "configure:apache",
+  "deploy:monit:reload"
 
 before "deploy:update_code",
   "configure:check"

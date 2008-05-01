@@ -31,6 +31,11 @@ def logrotate_setup
 end
 depend :remote, :command, logrotate_setup
 
+def known_hosts_setup
+  "/usr/bin/brightbox-ssh"
+end
+depend :remote, :command, known_hosts_setup
+
 namespace :configure do
 
   desc %Q{
@@ -137,6 +142,13 @@ namespace :configure do
     ensure
       reset! :releases
     end
+  end
+
+  desc %Q{
+  [internal]Make sure that SSH can loopback on the server name.
+  }
+  task :known_hosts, :except => {:no_release => true} do
+    run known_hosts_setup
   end
 
 end
