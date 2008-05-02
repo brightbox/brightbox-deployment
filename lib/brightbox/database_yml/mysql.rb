@@ -53,24 +53,23 @@ private
 
 
   def generate_entries
+    #We must have production as a minimum
+    @dbconfig["production"] ||= {}
     sqlreadwrite_mysql_environments.each do |env|
       augment_entry(env)
       check_entry(env)
     end
-    #We must have production as a minimum
-    @dbconfig["production"] ||= augment_entry("production")
   end
 
   def augment_entry(env)
-    entry = @dbconfig[env] || {}
+    @dbconfig[env] ||= {}
+    entry = @dbconfig[env] 
     entry["adapter"] = "mysql"
     entry["host"] = "sqlreadwrite.brightbox.net"
     entry["username"] ||= @mycnf["user"]
     entry["password"] ||= @mycnf["password"]
     entry["database"] ||= "#{entry["username"]}_#{@appname}_#{env}" 
   end
-
-
 
   def check_entry(env)
     ref = @dbconfig[env]
@@ -94,7 +93,7 @@ private
 
   def sqlreadwrite_mysql_environments
     @dbconfig.keys.select do |key|
-      ref = @dbconfig[key]
+      ref = @dbconfig[key] || {}
       sqlreadwrite_mysql_env?(ref)
     end 
   end

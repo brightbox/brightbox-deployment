@@ -36,6 +36,11 @@ def known_hosts_setup
 end
 depend :remote, :command, known_hosts_setup
 
+def mysql_setup
+  "/usr/bin/brightbox-mysql"
+end
+depend :remote, :command, mysql_setup
+
 namespace :configure do
 
   desc %Q{
@@ -149,6 +154,14 @@ namespace :configure do
   }
   task :known_hosts, :except => {:no_release => true} do
     run known_hosts_setup
+  end
+
+  desc %Q{
+  [internal]Check the current database.yml file and update the 
+  details from the .my.cnf file on the server if it exists.
+  }
+  task :mysql, :roles => :db, :only => {:primary => true} do
+    run %Q{#{mysql_setup} -n #{application} #{latest_release}/config/database.yml}
   end
 
 end

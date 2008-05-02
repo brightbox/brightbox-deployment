@@ -29,7 +29,7 @@ def write_file_with_backup(filename)
     tempname = file.path 
     yield file
   end
-  FileUtils.mv(filename, backupname)
+  FileUtils.mv(filename, backupname) if File.file?(filename)
   FileUtils.cp(tempname, filename)
 end
 

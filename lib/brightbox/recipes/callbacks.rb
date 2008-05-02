@@ -17,6 +17,9 @@ after "deploy:setup",
 before "deploy:update_code",
   "configure:check"
 
+after "deploy:update_code",
+  "configure:mysql"
+
 before "deploy:migrate",
   "database:create"
 
