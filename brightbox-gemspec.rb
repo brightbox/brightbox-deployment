@@ -13,7 +13,7 @@ end
   s.files = FileList["LICENSE", "Rakefile", "*.rb", "bin/brightbox-*","{lib,spec}/**/*.rb"].exclude(/recipe/).to_a
   s.add_dependency("ini", ">=0.1.1")
   s.summary = "Brightbox Server configuration scripts"
-  s.executables = FileList["bin/brightbox-*"].map { |filename| File.basename(filename) }
+  s.executables = FileList["bin/brightbox-*"].sub(/bin\//,'')
 end
 
 @client = Gem::Specification.new do |s|
