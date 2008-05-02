@@ -1,13 +1,23 @@
 require 'rake/gempackagetask'
-gem_name = "brightbox"
-require "#{gem_name}-gemspec.rb"
+require "brightbox-gemspec.rb"
 
-Rake::GemPackageTask.new(@spec).define
+namespace :client do
+  Rake::GemPackageTask.new(@client).define
 
-task :default => [:reinstall, :clobber_package]
+  task :default => [:reinstall, :clobber_package]
 
-task :reinstall => [:gem] do
-  sh %Q{sudo gem uninstall -x -v #{@spec.version} #{@spec.name} }
-  sh %q{sudo gem install pkg/*.gem}
+  desc "Reinstall the client gem locally"
+  task :reinstall => [:repackage] do
+    sh %Q{sudo gem uninstall -x -v #{@client.version} #{@client.name} }
+    sh %q{sudo gem install pkg/*.gem}
+  end
+
 end
 
+namespace :server do
+  Rake::GemPackageTask.new(@server).define
+end
+
+task :clobber_package => "client:clobber_package"
+task :package => ["client:package", "server:package"]
+task :repackage => ["client:repackage", "server:package"]

@@ -1,18 +1,28 @@
-@spec = Gem::Specification.new do |s| 
-  s.name = "brightbox"
-  s.version = "2.0"
-  s.author = "John Leach"
-  s.email = "john@brightbox.co.uk"
-  s.homepage = "http://rubyforge.org/projects/brightbox/"
-  s.rubyforge_project = 'brightbox'
-  s.platform = Gem::Platform::RUBY
-  s.summary = "Brightbox rails deployment scripts for Capistrano"
-  s.files = FileList["{bin,lib,spec}/**/*"].to_a
-  s.require_path = "lib"
-  s.has_rdoc = false
-  s.add_dependency("capistrano", ">= 2.1")
-  s.add_dependency("ini", ">= 0.1")
-#  s.add_dependency("mongrel_cluster", ">= 1.0.5")
-  s.default_executable = "brightbox"
-  s.executables = %W(brightbox brightbox-mysql brightbox-mongrel brightbox-apache brightbox-monit brightbox-logrotate brightbox-ssh)
+def add_common(spec)
+  spec.version = "2.0.0"
+  spec.authors = ["John Leach","Neil Wilson"]
+  spec.email = "support@brightbox.co.uk"
+  spec.homepage = "http://wiki.brightbox.co.uk/docs:thebrightboxgem"
+  spec.rubyforge_project = 'brightbox'
+  spec.has_rdoc = false
 end
+
+@server = Gem::Specification.new do |s|
+  add_common(s)
+  s.name = "brightbox-server-tools"
+  s.files = FileList["LICENSE", "Rakefile", "*.rb", "bin/brightbox-*","{lib,spec}/**/*.rb"].exclude(/recipe/).to_a
+  s.add_dependency("ini", ">=0.1.1")
+  s.summary = "Brightbox Server configuration scripts"
+  s.executables = FileList["bin/brightbox-*"].map { |filename| File.basename(filename) }
+end
+
+@client = Gem::Specification.new do |s|
+  add_common(s)
+  s.name = "brightbox"
+  s.files = FileList["LICENSE", "Rakefile", "*.rb", "lib/**/*.rb","bin/brightbox"].exclude("lib/brightbox/database*").to_a
+  s.autorequire = "brightbox/recipes"
+  s.add_dependency("capistrano", ">= 2.1")
+  s.summary = "Brightbox rails deployment scripts for Capistrano"
+  s.executable = 'brightbox'
+end
+

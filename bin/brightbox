@@ -71,8 +71,9 @@ files = {
   FILE
 
 "config/deploy.rb" => unindent(<<-FILE),
-    require 'brightbox/recipes'
     ## Generated with '#{@progname}' on #{Time.now}
+    gem 'brightbox', '>=2'
+    require 'brightbox/recipes'
 
     # The name of your application.  Used for deployment directory and filenames
     # and Apache configs. Should be unique on the Brightbox
@@ -90,6 +91,10 @@ files = {
     # URL of your source repository. This is the default one that comes on 
     # every Brightbox, you can use your own (we'll let you :)
     set(:repository) { "svn+ssh://\#{user}@#{@server}/home/\#{user}/subversion/\#{application}/trunk" }
+
+    # SSH options. The forward agent option is used so that loopback logins
+    # with keys work properly
+    ssh_options[:forward_agent] = true
 
     ### Other options you can set ##
     # Comma separated list of additional domains for Apache
