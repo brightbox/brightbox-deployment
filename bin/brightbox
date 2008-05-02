@@ -30,7 +30,7 @@ require 'optparse'
 @options = {}
 
 def has_required_options?
-  [@application, @domain, @server].all?
+  [@server].all?
 end
 
 OptionParser.new do |opts|
@@ -39,12 +39,14 @@ OptionParser.new do |opts|
 
   opts.on("-n APPLICATION_NAME", "--name APPLICATION_NAME",
     "Name of application (a short useful",
-    "name for the app such as 'myforum')\n"
+    "name for the app such as 'myforum')",
+    "(defaults to the short name of the server)\n"
   ) { |value| @application = value }
   
   opts.on("-d DOMAIN_NAME", "--domain DOMAIN_NAME",
     "Domain name for application",
-    "(e.g: www.example.com)\n"
+    "(e.g: www.example.com)",
+    "(defaults to the server name)\n"
   ) { |value| @domain = value }
   
   opts.on("-i SERVER_NAME", "--server SERVER_NAME",
@@ -61,7 +63,7 @@ OptionParser.new do |opts|
   begin
     opts.parse!(ARGV)
     raise OptionParser::ParseError,
-      "You must supply all of the arguments" unless has_required_options?
+      "You must supply the server name" unless has_required_options?
   rescue OptionParser::ParseError => e
     warn e.message
     puts opts
@@ -80,6 +82,9 @@ def unindent(string)
   indentation = string[/\A\s*/]
   string.strip.gsub(/^#{indentation}/, "")
 end
+
+@domain ||= @server
+@application ||= @server.gsub(/(-\d{3})?\..*\Z/,'')
 
 files = {
   "Capfile" => unindent(<<-FILE),
