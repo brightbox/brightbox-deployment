@@ -18,11 +18,6 @@
 #    <http://www.gnu.org/licenses/>.
 #
 
-def execute_on_one_line(cmd_list)
-  cmd_list.gsub!(/\n/m, ' ')
-  invoke_command cmd_list, :via => fetch(:run_method, :sudo)
-end
-
 def monit_setup
   "/usr/bin/brightbox-monit"
 end

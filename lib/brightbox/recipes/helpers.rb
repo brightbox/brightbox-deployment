@@ -17,27 +17,18 @@
 #    Public License along with this program.  If not, see
 #    <http://www.gnu.org/licenses/>.
 #
-# Hook tasks into the standard deployment system
+def rake_task(taskname)
+  rake = fetch(:rake, "rake")
+  rails_env = fetch(:rails_env, "production")
+  rake_env = fetch(:rake_env, "")
+  directory = current_release 
 
-after "deploy:setup",
-  "configure:logrotation",
-  "configure:monit",
-  "configure:mongrel",
-  "configure:apache",
-  "deploy:monit:reload"
+  run "cd #{directory}; #{rake} RAILS_ENV=#{rails_env} #{rake_env} #{taskname}"
+end
 
-before "deploy:update_code",
-  "configure:check"
+def execute_on_one_line(cmd_list)
+  cmd_list.gsub!(/\n/m, ' ')
+  invoke_command cmd_list, :via => fetch(:run_method, :sudo)
+end
 
-after "deploy:update_code",
-  "configure:mysql",
-  "gems:install"
 
-before "deploy:migrate",
-  "database:create"
-
-after "deploy:start",
-  "deploy:web:reload_if_new"
-
-after "deploy:restart",
-  "deploy:web:reload_if_new"

@@ -17,14 +17,6 @@
 #    Public License along with this program.  If not, see
 #    <http://www.gnu.org/licenses/>.
 #
-def rake_task(taskname)
-  rake = fetch(:rake, "rake")
-  rails_env = fetch(:rails_env, "production")
-  rake_env = fetch(:rake_env, "")
-  directory = current_release 
-
-  run "cd #{directory}; #{rake} RAILS_ENV=#{rails_env} #{rake_env} #{taskname}"
-end
 
 namespace :database do
 

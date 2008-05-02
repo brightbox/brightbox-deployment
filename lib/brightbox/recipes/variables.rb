@@ -30,6 +30,7 @@ _cset(:domain) { abort "You need to set the :domain variable, e.g set :domain 'w
 _cset :domain_aliases, ""
 _cset :user, "rails"
 ssh_options[:forward_agent] = true
+default_run_options[:pty] = true
 
 # Default system dependencies
 depend :remote, :gem, "rails", ">=2"

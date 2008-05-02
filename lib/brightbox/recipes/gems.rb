@@ -17,27 +17,14 @@
 #    Public License along with this program.  If not, see
 #    <http://www.gnu.org/licenses/>.
 #
-# Hook tasks into the standard deployment system
 
-after "deploy:setup",
-  "configure:logrotation",
-  "configure:monit",
-  "configure:mongrel",
-  "configure:apache",
-  "deploy:monit:reload"
+namespace :gems do
 
-before "deploy:update_code",
-  "configure:check"
+  desc %Q{
+  [internal]Run the gems install task in the application.
+  }
+  task :install, :roles => :app do
+    rake_task("gems:install")
+  end
 
-after "deploy:update_code",
-  "configure:mysql",
-  "gems:install"
-
-before "deploy:migrate",
-  "database:create"
-
-after "deploy:start",
-  "deploy:web:reload_if_new"
-
-after "deploy:restart",
-  "deploy:web:reload_if_new"
+end
