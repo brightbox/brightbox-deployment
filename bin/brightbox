@@ -119,6 +119,11 @@ files = {
     # SSH options. The forward agent option is used so that loopback logins
     # with keys work properly
     ssh_options[:forward_agent] = true
+    
+    # Forces a Pty so that svn+ssh repository access will work. You
+    # don't need this if you are using a different SCM system. Note that
+    # ptys stop shell startup scripts from running.
+    default_run_options[:pty] = true
 
     ### Other options you can set ##
     # Comma separated list of additional domains for Apache

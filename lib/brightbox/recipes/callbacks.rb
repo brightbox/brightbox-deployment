@@ -20,7 +20,6 @@
 # Hook tasks into the standard deployment system
 
 after "deploy:setup",
-  "configure:known_hosts",
   "configure:logrotation",
   "configure:monit",
   "configure:mongrel",
