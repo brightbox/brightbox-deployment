@@ -108,6 +108,7 @@ namespace :configure do
     execute_on_one_line <<-END
         #{monit_setup}
         -n #{application}
+        -u #{user}
         -r #{current_path}
         -h #{mongrel_host}
         -p #{mongrel_port}
