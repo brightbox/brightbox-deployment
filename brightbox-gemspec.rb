@@ -40,7 +40,7 @@ end
   s.name = "brightbox"
   s.files = FileList["LICENSE", "Rakefile", "*.rb", "lib/**/*.rb","bin/brightbox"].exclude("lib/brightbox/database*").to_a
   s.autorequire = "brightbox/recipes"
-  s.add_dependency("capistrano", ">= 2.1")
+  s.add_dependency("capistrano", ">= 2.3")
   s.summary = "Brightbox rails deployment scripts for Capistrano"
   s.executable = 'brightbox'
 end

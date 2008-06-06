@@ -29,8 +29,8 @@ _cset(:mongrel_config_file) {File.join(deploy_to, "#{application}_mongrel_config
 _cset(:domain) { abort "You need to set the :domain variable, e.g set :domain 'www.example.com'" }
 _cset :domain_aliases, ""
 _cset :user, "rails"
+_cset :runner, user
 ssh_options[:forward_agent] = true
-default_run_options[:pty] = true
 
 # Default system dependencies
 depend :remote, :gem, "rails", ">=2"
