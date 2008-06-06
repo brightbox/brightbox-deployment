@@ -18,13 +18,23 @@
 #    <http://www.gnu.org/licenses/>.
 #
 
-namespace :database do
+namespace :db do
 
   desc %Q{
   [internal]Create the database if it doesn't exist
   }
   task :create, :roles => :db, :only => { :primary => true } do
-    rake_task("run", "db:create")
+    run rake_task("db:create")
+  end
+
+  namespace :check do
+    desc %Q{
+    [internal]Check the database configuration to make sure that
+    it conforms to the Brightbox standard
+    }
+    task :config, :roles => :db, :only => {:primary => true} do
+      run rake_task("db:check:config")
+    end
   end
 
 end

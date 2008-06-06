@@ -28,6 +28,11 @@ def apache_setup
 end
 depend :remote, :command, apache_setup
 
+def nginx_setup
+  "/usr/bin/railsapp-nginx"
+end
+depend :remote, :command, nginx_setup
+
 def mongrel_setup
   "/usr/bin/railsapp-mongrel"
 end
@@ -45,8 +50,9 @@ depend :remote, :command, mysql_setup
 
 namespace :configure do
 
+[:nginx, :apache].each do |webserver|
   desc %Q{
-  [internal]Create Apache config. Creates a load balancing virtual host \
+  [internal]Create #{webserver.to_s} config. Creates a load balancing virtual host \
   configuration based upon your specified settings
 
     :application      Name of the application
@@ -59,9 +65,9 @@ namespace :configure do
     :ssl_key          Name of private key to use with certificate
 
   }
-  task :apache, :roles => :web, :except => {:no_release => true} do
-    sudo_on_one_line <<-END
-        #{apache_setup}
+  task webserver, :roles => :web, :except => {:no_release => true} do
+    sudo on_one_line( <<-END
+        #{send(webserver.to_s + "_setup")}
         -n #{application}
         -d #{domain}
         #{'-a '+domain_aliases if domain_aliases}
@@ -72,7 +78,9 @@ namespace :configure do
         #{'-c '+ssl_certificate if ssl_certificate} 
         #{'-k '+ssl_key if ssl_key}
     END
+        )
   end
+end
 
   desc %Q{
   [internal]Create Mongrel config. Creates a set of mongrels running \
@@ -86,7 +94,7 @@ namespace :configure do
 
   }
   task :mongrel, :roles => :app, :except => {:no_release => true} do
-    sudo_on_one_line <<-END
+    sudo on_one_line( <<-END
         #{mongrel_setup}
         -n #{application}
         -r #{current_path}
@@ -96,6 +104,7 @@ namespace :configure do
         -C #{mongrel_config_file}
         -P #{mongrel_pid_file}
     END
+        )
   end
 
   desc %Q{
@@ -109,7 +118,7 @@ namespace :configure do
 
   }
   task :monit, :except => {:no_release => true} do
-    sudo_on_one_line <<-END
+    sudo on_one_line( <<-END
         #{monit_setup}
         -n #{application}
         -u #{user}
@@ -120,6 +129,7 @@ namespace :configure do
         -C #{mongrel_config_file}
         -P #{mongrel_pid_file}
     END
+        )
   end
 
   desc %Q{
@@ -132,13 +142,14 @@ namespace :configure do
 
   }
   task :logrotation, :roles => :app, :except => {:no_release => true} do
-    sudo_on_one_line <<-END
+    sudo on_one_line( <<-END
         #{logrotate_setup}
         -n #{application}
         -l #{log_dir}
         -s #{log_max_size}
         -k #{log_keep}
     END
+        )
   end
 
   desc %Q{

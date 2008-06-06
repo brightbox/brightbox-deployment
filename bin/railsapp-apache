@@ -18,135 +18,21 @@
 #    Public License along with this program.  If not, see
 #    <http://www.gnu.org/licenses/>.
 #
+WEBSERVER="apache2"
+require "brightbox/webserver-common"
 
-require 'rubygems'
-require 'optparse'
-require 'fileutils'
-
-@mongrelhost = "127.0.0.1"
-@mongrels = 2
-@aliases = nil
-@certificate = nil
-@key_file = nil
-@app_name = File.basename $0
-@apache_http_modules = %w(proxy_balancer proxy_http rewrite)
-@apache_https_modules = %w(ssl headers)
-
-def has_required_options?
-  [@application, @mongrelhost, @mongrels, @webroot, @domain,
-    @port].all? &&
-    (@certificate || @certificate_key.nil?)
-end
-
-def certificate_file
-  return @certificate if File.file?(@certificate)
-  cert_base = File.basename(@certificate, File.extname(@certificate))
-  test_path = File.join('','etc','ssl','certs', cert_base + '.*')
-  candidates = Dir[test_path]
-  if candidates.empty?
-    abort "#{@app_name}: Unable to find certificate file for #{@cert_base}"
-  end
-  result = candidates.pop
-  unless candidates.empty?
-    abort "#{@app_name}: #{@cert_base} resolves to more than one file. Please be more specific"
-  end
-  result
-end
-
-def key_file
-  if @certificate_key
-    return @certificate_key if File.file?(@certificate_key)
-    key_base = File.basename(@certificate_key, File.extname(@certificate_key))
-  else
-    key_base = File.basename(@certificate, File.extname(@certificate))
-  end
-  test_path = File.join('','etc','ssl','private', key_base + '.*')
-  candidates = Dir[test_path]
-  return nil if candidates.empty?
-  result = candidates.pop
-  unless candidates.empty?
-    abort "#{@app_name}: #{key_base} resolves to more than one file. Please be more specific"
-  end
-  result
-end
-
-OptionParser.new do |opts|
-  opts.banner = "brightbox-apache creates an Apache config for a Rails app\n"
-  opts.banner << "Usage: #{@app_name} [options] [args]"
-
-  opts.on("-n APPLICATION_NAME", "--name APPLICATION_NAME",
-    "Name of application (a short useful name for the app such as 'myforum')"
-  ) { |value| @application = value }
-  
-  opts.on("-w", "--webroot WEB_ROOT",
-    "Full path to web root (e.g: /home/rails/myforum/current/public)"
-  ) { |value| @webroot = value }
-  
-  opts.on("-d", "--domain DOMAIN_NAME",
-    "Domain name for application (e.g: www.example.com)"
-  ) { |value| @domain = value }
-  
-  opts.on("-a", "--aliases ALIASES",
-    "Aliases for domain name, comma separated (e.g: www.example.org,www.example.net)"
-  ) { |value| @aliases = value.to_s.split(',').join(' ')}
-  
-  opts.on("-p", "--port MONGREL_PORT", Integer,
-    "Port of the first mongrel service"
-  ) { |value| @port = value.to_i }
-  
-  opts.on("-s", "--servers MONGRELS", Integer,
-    "Number of mongrel servers running (default: #{@mongrels})"
-  ) { |value| @mongrels = value.to_i }
-  
-  opts.on("-h", "--mongrelhost MONGREL_HOST",
-    "ip/host where mongrel is running (default: #{@mongrelhost})"
-  ) { |value| @mongrelhost = value }
-
-  opts.on("-c", "--ssl-cert CERTIFICATE_NAME",
-          "create an SSL configuration using CERTIFICATE_NAME"
-         ) { |value| @certificate = value }
-
-  opts.on("-k", "--ssl-key KEY_NAME",
-          "Name of private key to use CERTIFICATE"
-         ) { |value| @certificate_key = value }
- 
-  begin
-    opts.parse(ARGV)
-    raise OptionParser::ParseError,
-      "You must supply the required arguments" unless has_required_options?
-  rescue OptionParser::ParseError => e
-    warn e.message
-    puts opts
-    exit 1
-  end
-  if @certificate
-    @certificate_file = certificate_file
-    @key_file = key_file
+def ssl_certificate_key
+  if @key_file
+    "  SSLCertificateKeyFile #{key_file}"
   end
 end
-
-  def configure_site(site_name)
-    filename = "/etc/apache2/sites-available/rails-#{site_name}"
-    if File.exists?(filename)
-      FileUtils.mkdir_p("/etc/apache2/sites-archived")
-      FileUtils.cp filename, "/etc/apache2/sites-archived/rails-#{site_name}.#{Time.now.strftime('%y%m%d%H%M%S')}"
-    end
-    File.open(filename, "w") { |f| f.write @config }
-    FileUtils.ln_s(filename, "/etc/apache2/sites-enabled/rails-#{site_name}", :force => true)
-  end
-
-  def ssl_certificate_key
-    if @key_file
-      "  SSLCertificateKeyFile #{key_file}"
-    end
-  end
 
 def http_config
   %Q{
-# Created by brightbox-apache at #{Time.now}
+#{config_time_stamp}
 <VirtualHost *:80>
   ServerName #{@domain}
-  ServerAlias #{@application}.#{`hostname`.chomp} #{@aliases}
+  ServerAlias #{local_app_alias} #{@aliases}
   DocumentRoot #{@webroot}
 
   <Directory "#{@webroot}">
@@ -158,7 +44,7 @@ def http_config
 
   # Configure mongrel_cluster
   <Proxy balancer://mongrel_cluster>
- #{@balancer_members}
+ #{balancer_members}
   </Proxy>
 
   ErrorLog /var/log/web/#{@application}.err
@@ -175,17 +61,16 @@ def http_config
   }
 end
 
-
 def https_config
   %Q{
-# Created by brightbox-apache at #{Time.now}
+#{config_time_stamp}
 <VirtualHost _default_:443>
   SSLEngine On
   SSLCertificateFile #{@certificate_file}
   #{ssl_certificate_key}
   RequestHeader set X_FORWARDED_PROTO "https"
   ServerName #{@domain}
-  ServerAlias #{@application}.#{`hostname`.chomp} #{@aliases}
+  ServerAlias #{local_app_alias} #{@aliases}
   DocumentRoot #{@webroot}
 
   <Directory "#{@webroot}">
@@ -197,7 +82,7 @@ def https_config
 
   # Configure mongrel_cluster
   <Proxy balancer://mongrel_cluster>
- #{@balancer_members}
+ #{balancer_members}
   </Proxy>
 
   ErrorLog /var/log/web/#{@application}.err
@@ -214,7 +99,6 @@ def https_config
   }
 end
 
-@balancer_members = (@port..@port+@mongrels-1).collect {|i| "    BalancerMember http://#{@mongrelhost}:#{i}/ retry=5" }.join("\n")
 
 def activate_modules(modules)
   modules.each do |mod|
@@ -229,9 +113,15 @@ def configure_ports
   end
 end
 
+def balancer_members
+  (@port..@port+@mongrels-1).collect do |i|
+    "    BalancerMember http://#{@mongrelhost}:#{i}/ retry=5"
+  end.join("\n")
+end
 
 #MAIN PROGRAM
-
+@apache_http_modules = %w(proxy_balancer proxy_http rewrite)
+@apache_https_modules = %w(ssl headers)
 
 #Create a normal HTTP config
 @config=http_config
@@ -247,4 +137,3 @@ end
 
 # Make apache listen on the right ports
 configure_ports
-

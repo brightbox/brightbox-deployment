@@ -31,7 +31,6 @@ end
   add_common(s)
   s.name = "brightbox-server-tools"
   s.files = FileList["LICENSE", "Rakefile", "*.rb", "bin/railsapp-*","{lib,spec}/**/*.rb"].exclude(/recipe/).to_a
-  s.add_dependency("ini", ">=0.1.1")
   s.summary = "Brightbox Server configuration scripts"
   s.executables = FileList["bin/railsapp-*"].sub(/bin\//,'')
 end
@@ -39,7 +38,7 @@ end
 @client = Gem::Specification.new do |s|
   add_common(s)
   s.name = "brightbox"
-  s.files = FileList["LICENSE", "Rakefile", "*.rb", "lib/**/*.rb","bin/brightbox"].exclude("lib/brightbox/database*").to_a
+  s.files = FileList["LICENSE", "Rakefile", "*.rb", "lib/**/*.rb","bin/brightbox"].exclude("lib/brightbox/webserver-common.rb").to_a
   s.add_dependency("capistrano", ">= 2.3")
   s.summary = "Brightbox rails deployment scripts for Capistrano"
   s.executable = 'brightbox'

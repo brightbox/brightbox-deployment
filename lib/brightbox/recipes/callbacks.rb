@@ -23,17 +23,18 @@ after "deploy:setup",
   "configure:logrotation",
   "configure:monit",
   "configure:mongrel",
-  "configure:apache"
+  "configure:apache",
+  "configure:nginx"
 
 after "deploy:cold",
   "deploy:monit:reload"
 
 after "deploy:update_code",
-  "configure:mysql",
   "gems:install"
 
 before "deploy:migrate",
-  "database:create"
+  "db:check:config",
+  "db:create"
 
 after "deploy:start",
   "deploy:web:reload_if_new"

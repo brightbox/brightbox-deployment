@@ -19,74 +19,21 @@
 #    <http://www.gnu.org/licenses/>.
 #
 
-require 'rubygems'
-require 'optparse'
-require 'erb'
-require 'fileutils'
-
-@mongrelhost = "127.0.0.1"
-@mongrels = 2
-@aliases = ''
 
 WEBSERVER='nginx'
+require 'brightbox/webserver-common'
 
-def has_required_options?
-  [@application, @webroot, @domain, @port].all?
-end
 
-OptionParser.new do |opts|
-  opts.banner = "brightbox-apache creates an Apache config for a Rails app\n"
-  opts.banner << "Usage: #{$0} [options] [args]"
-
-  opts.on("-nAPPLICATION_NAME", "--name APPLICATION_NAME",
-    "Name of application environment (a short useful name for the app such as 'myforum_production')"
-  ) { |value| @application = value }
-  
-  opts.on("-wWEB_ROOT", "--webroot WEB_ROOT",
-    "Full path to web root (e.g: /home/rails/myforum/current/public)"
-  ) { |value| @webroot = value }
-  
-  opts.on("-dDOMAIN_NAME", "--domain DOMAIN_NAME",
-    "Domain name for application (e.g: www.example.com)"
-  ) { |value| @domain = value }
-  
-  opts.on("-a", "--aliases ALIASES",
-    "Aliases for domain name, comma separated (e.g: www.example.org,www.example.net)"
-  ) { |value| @aliases = value.to_s.split(',').join(' ')}
-  
-  opts.on("-p", "--port MONGREL_PORT",
-    "Port of the first mongrel service"
-  ) { |value| @port = value.to_i }
-  
-  opts.on("-s", "--servers MONGRELS",
-    "Number of mongrel servers running (default: #{@mongrels})"
-  ) { |value| @mongrels = value.to_i }
-  
-  opts.on("-h", "--mongrelhost MONGREL_HOST",
-    "ip/host where mongrel is running (default: #{@mongrelhost})"
-  ) { |value| @mongrelhost = value }
- 
-  begin
-    opts.parse(ARGV)
-    raise OptionParser::ParseError,
-      "You must supply the required arguments" unless has_required_options?
-  rescue OptionParser::ParseError => e
-    warn e.message
-    puts opts
-    exit 1
-  end
-end
-
-@balancer_members = (@port..@port+@mongrels-1).collect {|i| "  server #{@mongrelhost}:#{i};" }.join("\n")
-
-TEMPLATE = <<EOT
+def http_config
+<<-EOT
+#{config_time_stamp}
 upstream #{@application}_mongrels {
   fair;
   # List of mongrels
-#{@balancer_members}
+#{balancer_members}
 }
 server {
-  server_name #{@application}.#{`hostname`.chomp} #{@domain} #{@aliases};
+  server_name #{@domain} #{local_app_alias} #{@aliases};
   root #{@webroot};
   access_log /var/log/web/#{@application}.log main;
     
@@ -123,22 +70,16 @@ server {
   }
 }
 EOT
-
-webserver_config = File.join("/etc", WEBSERVER)
-appfile = "rails-#{@application}"
-
-sites_available = File.join(webserver_config, 'sites-available')
-sites_enabled = sites_available.sub("available", "enabled")
-sites_archived = sites_available.sub("available", "archived")
-
-filename = File.join(sites_available, appfile)
-archivefile = File.join(sites_archived, appfile + "." + Time.now.strftime('%y%m%d%H%M%S'))
-enablelink = File.join(sites_enabled, appfile)
-
-if File.exists?(filename)
-  FileUtils.mkdir_p(sites_archived)
-  FileUtils.cp filename, archivefile
 end
 
-File.open(filename, "w") { |f| f.write TEMPLATE }
-FileUtils.ln_s(filename, enablelink, :force => true)
+def balancer_members
+  (@port..@port+@mongrels-1).collect do |i|
+    "  server #{@mongrelhost}:#{i};"
+  end.join("\n")
+end
+
+#MAIN PROGRAM
+
+#Create a normal HTTP config
+@config=http_config
+configure_site(@application)

@@ -17,18 +17,17 @@
 #    Public License along with this program.  If not, see
 #    <http://www.gnu.org/licenses/>.
 #
-def rake_task(run_method, taskname)
+def rake_task(taskname)
   rake = fetch(:rake, "rake")
   rails_env = fetch(:rails_env, "production")
   rake_env = fetch(:rake_env, "")
   directory = current_release 
 
-  send(run_method, "cd #{directory}; #{rake} RAILS_ENV=#{rails_env} #{rake_env} #{taskname}")
+  "cd #{directory}; #{rake} RAILS_ENV=#{rails_env} #{rake_env} #{taskname}"
 end
 
-def sudo_on_one_line(cmd_list)
+def on_one_line(cmd_list)
   cmd_list.gsub!(/\n/m, ' ')
-  sudo cmd_list
 end
 
 
