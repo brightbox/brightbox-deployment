@@ -46,7 +46,9 @@ namespace :deploy do
         :via => fetch(:run_method, :sudo)
     end
 
-    desc "[internal]reload web server if first release"
+    desc %Q{
+    [internal]reload web server if first release
+    }
     task :reload_if_new, :roles => :web, :except => {:no_release => true} do
       reset! :releases
       reload if releases.length == 1
@@ -65,4 +67,13 @@ namespace :deploy do
     end
 
   end
+
+  desc %Q{Setup the directories and deploy the initial version of the
+  application
+  }
+  task :initial do
+    setup
+    cold
+  end
+
 end

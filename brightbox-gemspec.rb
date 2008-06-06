@@ -17,8 +17,9 @@
 #    Public License along with this program.  If not, see
 #    <http://www.gnu.org/licenses/>.
 #
+require File.join(File.dirname(__FILE__),"lib/brightbox/version")
 def add_common(spec)
-  spec.version = "2.0.0"
+  spec.version = Brightbox::VERSION
   spec.authors = ["John Leach","Neil Wilson"]
   spec.email = "support@brightbox.co.uk"
   spec.homepage = "http://wiki.brightbox.co.uk/docs:thebrightboxgem"

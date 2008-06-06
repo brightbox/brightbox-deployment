@@ -23,11 +23,10 @@ after "deploy:setup",
   "configure:logrotation",
   "configure:monit",
   "configure:mongrel",
-  "configure:apache",
-  "deploy:monit:reload"
+  "configure:apache"
 
-before "deploy:update_code",
-  "configure:check"
+after "deploy:cold",
+  "deploy:monit:reload"
 
 after "deploy:update_code",
   "configure:mysql",
