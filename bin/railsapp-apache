@@ -29,6 +29,8 @@ require 'fileutils'
 @certificate = nil
 @key_file = nil
 @app_name = File.basename $0
+@apache_http_modules = %w(proxy_balancer proxy_http rewrite)
+@apache_https_modules = %w(ssl headers)
 
 def has_required_options?
   [@application, @mongrelhost, @mongrels, @webroot, @domain,
@@ -212,17 +214,37 @@ def https_config
   }
 end
 
-
 @balancer_members = (@port..@port+@mongrels-1).collect {|i| "    BalancerMember http://#{@mongrelhost}:#{i}/ retry=5" }.join("\n")
+
+def activate_modules(modules)
+  modules.each do |mod|
+    system %Q{/usr/sbin/a2enmod "#{mod}"}
+  end
+end
+
+def configure_ports
+  File.open("/etc/apache2/ports.conf", "w") do |f|
+    f.puts "Listen 80"
+    f.puts "Listen 443" if File.file?("/etc/apache2/sites-enabled/rails-default-ssl")
+  end
+end
+
+
+#MAIN PROGRAM
 
 
 #Create a normal HTTP config
 @config=http_config
 configure_site(@application)
+activate_modules(@apache_http_modules)
   
 #Create an SSL site if requested
 if @certificate
   @config=https_config
   configure_site("default-ssl")
+  activate_modules(@apache_https_modules)
 end
+
+# Make apache listen on the right ports
+configure_ports
 
