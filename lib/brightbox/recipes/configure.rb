@@ -19,27 +19,27 @@
 #
 
 def monit_setup
-  "/usr/bin/brightbox-monit"
+  "/usr/bin/railsapp-monit"
 end
 depend :remote, :command, monit_setup
 
 def apache_setup
-  "/usr/bin/brightbox-apache"
+  "/usr/bin/railsapp-apache"
 end
 depend :remote, :command, apache_setup
 
 def mongrel_setup
-  "/usr/bin/brightbox-mongrel"
+  "/usr/bin/railsapp-mongrel"
 end
 depend :remote, :command, mongrel_setup
 
 def logrotate_setup
-  "/usr/bin/brightbox-logrotate"
+  "/usr/bin/railsapp-logrotate"
 end
 depend :remote, :command, logrotate_setup
 
 def mysql_setup
-  "/usr/bin/brightbox-mysql"
+  "/usr/bin/railsapp-check"
 end
 depend :remote, :command, mysql_setup
 
@@ -55,6 +55,8 @@ namespace :configure do
     :mongrel_host     Name of application layer host (default localhost)
     :mongrel_port     Start port of the mongrel cluster (default 8000)
     :mongrel_servers  Number of servers on app host (default 2)
+    :ssl_certificate  Create SSL configuration with certificate
+    :ssl_key          Name of private key to use with certificate
 
   }
   task :apache, :roles => :web, :except => {:no_release => true} do
@@ -62,11 +64,13 @@ namespace :configure do
         #{apache_setup}
         -n #{application}
         -d #{domain}
-        -a '#{domain_aliases}'
+        #{'-a '+domain_aliases if domain_aliases}
         -w #{File.join(current_path, 'public')}
         -h #{mongrel_host}
         -p #{mongrel_port}
         -s #{mongrel_servers}
+        #{'-c '+ssl_certificate if ssl_certificate} 
+        #{'-k '+ssl_key if ssl_key}
     END
   end
 

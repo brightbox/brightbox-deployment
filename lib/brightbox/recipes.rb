@@ -17,6 +17,6 @@
 #    Public License along with this program.  If not, see
 #    <http://www.gnu.org/licenses/>.
 #
-Dir[File.join(File.dirname(__FILE__), 'recipes/*.rb')].each do |recipe|
+Dir[File.join(File.dirname(__FILE__), 'recipes', '*.rb')].each do |recipe|
   Capistrano::Configuration.instance(true).load recipe
 end

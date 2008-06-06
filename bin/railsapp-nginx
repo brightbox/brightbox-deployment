@@ -2,7 +2,7 @@
 #    Brightbox - Easy Ruby Web Application Deployment
 #    Copyright (C) 2008, Neil Wilson, Brightbox Systems
 #
-#    This file is part of the Brightbox deployment system
+#    This file is part of the Brightbox @application system
 #
 #    Brightbox gem is free software: you can redistribute it and/or modify it
 #    under the terms of the GNU Affero General Public License as published
@@ -28,9 +28,10 @@ require 'fileutils'
 @mongrels = 2
 @aliases = ''
 
+WEBSERVER='nginx'
+
 def has_required_options?
-  [@application, @aliases, @mongrelhost, @mongrels, @webroot, @domain,
-    @port].all?
+  [@application, @webroot, @domain, @port].all?
 end
 
 OptionParser.new do |opts|
@@ -38,7 +39,7 @@ OptionParser.new do |opts|
   opts.banner << "Usage: #{$0} [options] [args]"
 
   opts.on("-nAPPLICATION_NAME", "--name APPLICATION_NAME",
-    "Name of application (a short useful name for the app such as 'myforum')"
+    "Name of application environment (a short useful name for the app such as 'myforum_production')"
   ) { |value| @application = value }
   
   opts.on("-wWEB_ROOT", "--webroot WEB_ROOT",
@@ -76,49 +77,68 @@ OptionParser.new do |opts|
   end
 end
 
-@balancer_members = (@port..@port+@mongrels-1).collect {|i| "    BalancerMember http://#{@mongrelhost}:#{i}" }.join("\n")
+@balancer_members = (@port..@port+@mongrels-1).collect {|i| "  server #{@mongrelhost}:#{i};" }.join("\n")
 
 TEMPLATE = <<EOT
-# Created by brightbox-apache at <%= Time.now %>
-<VirtualHost *:80>
-  ServerName <%= @domain %>
-<% unless @aliases.empty? %>
-  ServerAlias <%= @aliases %>
-<% end %>
-  DocumentRoot <%= @webroot %>
+upstream #{@application}_mongrels {
+  fair;
+  # List of mongrels
+#{@balancer_members}
+}
+server {
+  server_name #{@application}.#{`hostname`.chomp} #{@domain} #{@aliases};
+  root #{@webroot};
+  access_log /var/log/web/#{@application}.log main;
+    
+  # Capistrano maintenance message support
+  if (-f $document_root/system/maintenance.html) {
+    rewrite ^(.*)$ /system/maintenance.html last;
+    break;
+  }
 
-  <Directory "<%= @webroot %>">
-    Options FollowSymLinks
-    AllowOverride None
-    Order allow,deny
-    Allow from all
-  </Directory>
+  location / {
+    ## General Rails error page stuff
+    error_page 404              /404.html;
+    error_page 422              /422.html;
+    error_page 500 502 503 504  /500.html;
+    error_page 403              /403.html;
 
-  # Configure mongrel_cluster
-  <Proxy balancer://mongrel_cluster>
-<%= @balancer_members %>
-  </Proxy>
-
-  ErrorLog /var/log/web/<%= @application %>.err
-  CustomLog /var/log/web/<%= @application %>.log combined
-
-  # Rails specific rewrite rules
-  Include /etc/apache2/brightbox-common
-
-  # Add any access limit directives here
-  <Location />
-    Allow from all
-  </Location>
-</VirtualHost>
+    # If the file exists then stop here. Saves 4 more stats and some
+    # rewrites.
+    if (-f $request_filename) { 
+      break; 
+    }
+    # Rails page caching
+    if (-f $request_filename/index.html) {
+      rewrite (.*) $1/index.html break;
+    }
+    if (-f $request_filename.html) {
+      rewrite (.*) $1.html break;
+    }
+    # If it hasn't been handled above, and isn't a static file
+    # then send to the mongrels
+    if (!-f $request_filename) {
+      proxy_pass http://#{@application}_mongrels;
+    }
+  }
+}
 EOT
 
-template = ERB.new(TEMPLATE)
-config = template.result
-filename = "/etc/apache2/sites-available/rails-#{@application}"
+webserver_config = File.join("/etc", WEBSERVER)
+appfile = "rails-#{@application}"
+
+sites_available = File.join(webserver_config, 'sites-available')
+sites_enabled = sites_available.sub("available", "enabled")
+sites_archived = sites_available.sub("available", "archived")
+
+filename = File.join(sites_available, appfile)
+archivefile = File.join(sites_archived, appfile + "." + Time.now.strftime('%y%m%d%H%M%S'))
+enablelink = File.join(sites_enabled, appfile)
+
 if File.exists?(filename)
-  FileUtils.mkdir_p("/etc/apache2/sites-archived")
-  FileUtils.cp filename, "/etc/apache2/sites-archived/rails-#{@application}.#{Time.now.strftime('%y%m%d%H%M%S')}"
+  FileUtils.mkdir_p(sites_archived)
+  FileUtils.cp filename, archivefile
 end
 
-File.open(filename, "w") { |f| f.write config }
-FileUtils.ln_s(filename, "/etc/apache2/sites-enabled/rails-#{@application}", :force => true)
+File.open(filename, "w") { |f| f.write TEMPLATE }
+FileUtils.ln_s(filename, enablelink, :force => true)

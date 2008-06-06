@@ -141,6 +141,14 @@ files = {
     set :deploy_via, :copy
 
     ### Other options you can set ##
+    # SSL Certificates. If you specify an SSL certificate name then
+    # the gem will create an 'https' configuration for this application
+    # TODO: Upload and install the keys on the server
+    # set :ssl_certificate, "/path/to/certificate/for/my_app.crt"
+    # set :ssl_key, "/path/to/key/for/my_app.key
+    # or
+    # set :ssl_certificate, "name_of_installed_certificate"
+
     # Comma separated list of additional domains for Apache
     # set :domain_aliases, "www.example.com,dev.example.com"
 

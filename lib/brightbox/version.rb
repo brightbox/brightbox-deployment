@@ -1,3 +1,3 @@
 module Brightbox
-  VERSION = "1.99"
+  VERSION = "2.0"
 end
