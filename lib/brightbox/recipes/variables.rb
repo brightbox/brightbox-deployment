@@ -27,9 +27,12 @@ _cset :mongrel_port, 9200
 _cset :mongrel_servers, 2
 _cset(:mongrel_config_file) {File.join(deploy_to, "#{application}_mongrel_config.yml")}
 _cset(:domain) { abort "You need to set the :domain variable, e.g set :domain 'www.example.com'" }
-_cset :domain_aliases, ""
+_cset :domain_aliases, nil
 _cset :user, "rails"
 _cset :runner, user
+_cset :use_sudo, false
+_cset :ssl_certificate, nil
+_cset :ssl_key, nil
 ssh_options[:forward_agent] = true
 
 # Default system dependencies

@@ -60,7 +60,7 @@ namespace :configure do
 
   }
   task :apache, :roles => :web, :except => {:no_release => true} do
-    execute_on_one_line <<-END
+    sudo_on_one_line <<-END
         #{apache_setup}
         -n #{application}
         -d #{domain}
@@ -86,7 +86,7 @@ namespace :configure do
 
   }
   task :mongrel, :roles => :app, :except => {:no_release => true} do
-    execute_on_one_line <<-END
+    sudo_on_one_line <<-END
         #{mongrel_setup}
         -n #{application}
         -r #{current_path}
@@ -109,7 +109,7 @@ namespace :configure do
 
   }
   task :monit, :except => {:no_release => true} do
-    execute_on_one_line <<-END
+    sudo_on_one_line <<-END
         #{monit_setup}
         -n #{application}
         -u #{user}
@@ -132,7 +132,7 @@ namespace :configure do
 
   }
   task :logrotation, :roles => :app, :except => {:no_release => true} do
-    execute_on_one_line <<-END
+    sudo_on_one_line <<-END
         #{logrotate_setup}
         -n #{application}
         -l #{log_dir}
@@ -161,7 +161,7 @@ namespace :configure do
   details from the .my.cnf file on the server if it exists.
   }
   task :mysql, :roles => :db, :only => {:primary => true} do
-    run %Q{#{mysql_setup} -n #{application} #{latest_release}/config/database.yml}
+    try_sudo "#{mysql_setup} -n #{application} #{latest_release}/config/database.yml"
   end
 
 end

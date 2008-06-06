@@ -133,12 +133,6 @@ end
     FileUtils.ln_s(filename, "/etc/apache2/sites-enabled/rails-#{site_name}", :force => true)
   end
 
-  def aliases
-    if @aliases
-      "  ServerAlias #{@aliases}"
-    end
-  end
-
   def ssl_certificate_key
     if @key_file
       "  SSLCertificateKeyFile #{key_file}"
@@ -150,7 +144,7 @@ def http_config
 # Created by brightbox-apache at #{Time.now}
 <VirtualHost *:80>
   ServerName #{@domain}
-  #{aliases}
+  ServerAlias #{@application}.#{`hostname`.chomp} #{@aliases}
   DocumentRoot #{@webroot}
 
   <Directory "#{@webroot}">
@@ -189,7 +183,7 @@ def https_config
   #{ssl_certificate_key}
   RequestHeader set X_FORWARDED_PROTO "https"
   ServerName #{@domain}
-  #{aliases}
+  ServerAlias #{@application}.#{`hostname`.chomp} #{@aliases}
   DocumentRoot #{@webroot}
 
   <Directory "#{@webroot}">

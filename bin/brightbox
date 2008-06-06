@@ -154,7 +154,7 @@ files = {
 
     # SSH options. The forward agent option is used so that loopback logins
     # with keys work properly
-    #ssh_options[:forward_agent] = true
+    # ssh_options[:forward_agent] = true
     
     # Forces a Pty so that svn+ssh repository access will work. You
     # don't need this if you are using a different SCM system. Note that
@@ -163,11 +163,11 @@ files = {
 
     ## Logrotation
     # Where the logs are stored. Defaults to <shared_path>/log
-    #set :log_dir, "central/log/path"
+    # set :log_dir, "central/log/path"
     # The size at which to rotate a log. e.g 1G, 100M, 5M. Defaults to 100M
-    #set :log_max_size, "100M"
+    # set :log_max_size, "100M"
     # How many old compressed logs to keep. Defaults to 10
-    #set :log_keep, "10"
+    # set :log_keep, "10"
 
     ## Version Control System
     # Which version control system. Defaults to subversion if there is
@@ -184,8 +184,24 @@ files = {
     # Port number where mongrel starts. Defaults to 9200
     # set :mongrel_port, 9200
     # Number of mongrel servers to start. Defaults to 2
-    #set :mongrel_servers, 2
+    # set :mongrel_servers, 2
+    
+    ## Deployment settings
+    # The brightbox gem deploys as the user 'rails' by default and
+    # into the 'production' environment. You can change these as required.
+    # set :user, "rails"
+    # set :rails_env, :production
 
+    ## Command running settings
+    # use_sudo is switched off by default so that commands are run
+    # directly as 'user' by the run command. If you switch on sudo
+    # make sure you set the :runner variable - which is the user the
+    # capistrano default tasks use to execute commands.
+    # NB. This just affects the default recipes unless you use the
+    # 'try_sudo' command to run your commands.
+    # set :use_sudo, false
+    # set :runner, user
+    
     ## Dependencies
     # Set the commands and gems that your application requires. e.g.
     # depend :remote, :gem, "will_paginate", ">=2.2.2"

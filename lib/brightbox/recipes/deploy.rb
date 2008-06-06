@@ -21,18 +21,17 @@
 
 namespace :deploy do
 
-  def monit_command
-    "/usr/sbin/monit"
+  def mongrel_command
+    "/usr/bin/mongrel_rails"
   end
-  depend :remote, :command, monit_command
+  depend :remote, :command, mongrel_command
 
   #Override start, stop and restart so that they use Monit to restart the
   #application servers
-  %W(start stop restart).each do |event|
-    desc "Ask monit to #{event} your application."
+  %W(start stop restart status).each do |event|
+    desc "Ask mongrel to #{event} your application."
     task event, :roles => :app, :except => {:no_release => true } do
-      invoke_command "#{monit_command} -g #{application} #{event} all",
-        :via => fetch(:run_method, :sudo)
+      try_sudo "#{mongrel_command} cluster::#{event} -C #{mongrel_config_file} --clean"
     end
   end
 
@@ -42,8 +41,7 @@ namespace :deploy do
       Reload the apache webserver
     }
     task :reload, :roles => :web, :except => {:no_release => true } do
-      invoke_command "/usr/sbin/invoke-rc.d apache2 reload", 
-        :via => fetch(:run_method, :sudo)
+      sudo "/usr/sbin/invoke-rc.d apache2 reload"
     end
 
     desc %Q{
@@ -62,8 +60,7 @@ namespace :deploy do
       Reload monit
     }
     task :reload do
-      invoke_command "#{monit_command} reload",
-        :via => fetch(:run_method, :sudo)
+      sudo "#{monit_command} reload"
     end
 
   end
