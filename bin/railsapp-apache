@@ -115,7 +115,7 @@ end
 
 def balancer_members
   (@port..@port+@mongrels-1).collect do |i|
-    "    BalancerMember http://#{@mongrelhost}:#{i}/ retry=5"
+    "    BalancerMember http://#{@mongrelhost}:#{i} retry=5"
   end.join("\n")
 end
 

@@ -26,6 +26,11 @@ namespace :deploy do
   end
   depend :remote, :command, mongrel_command
 
+  def monit_command
+    "/usr/sbin/monit"
+  end
+  depend :remote, :command, monit_command
+
   #Override start, stop and restart so that they use Monit to restart the
   #application servers
   %W(start stop restart status).each do |event|

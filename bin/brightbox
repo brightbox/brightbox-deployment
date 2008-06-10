@@ -156,7 +156,7 @@ unless Rake::Task.task_defined?("db:check:config")
     host=config['host']
     if host && host != 'sqlreadwrite.brightbox.net'
       pe "using '\#{host}', not the 'sqlreadwrite.brightbox.net' cluster"
-    elsif db && db !~ /\A\#{config['username']}/
+    elsif db && db !~ /\\A\#{config['username']}/
       pe "database name should start with '\#{config['username']}' if using cluster"
     end
   end
@@ -202,7 +202,7 @@ end
     server "#{@server}", :app, :web, :db, :primary => true
 
     # Target directory for the application on the web and app servers.
-    set(:deploy_to) { File.join("/home", user, application) }
+    set(:deploy_to) { File.join("", "home", user, application) }
 
     # URL of your source repository. This is the default one that comes on 
     # every Brightbox, you can use your own (we'll let you :)
@@ -211,6 +211,21 @@ end
     set :deploy_via, :copy
 
     ### Other options you can set ##
+    # Comma separated list of additional domains for Apache
+    # set :domain_aliases, "www.example.com,dev.example.com"
+
+    ## Local Shared Area
+    # These are the list of files and directories that you want
+    # to share between all the releases of your application.
+    # So if you have an 'upload' directory in public, add 'public/upload'
+    # to the :local_shared_dirs array.
+    # If you want to share the database.yml add 'config/database.yml'
+    # to the :local_shared_files array.
+    # The shared area is prepared with 'deploy:setup' and all the shared
+    # items are symlinked in when the code is updated.
+    # set :local_shared_dirs, %w(public/upload)
+    # set :local_shared_files, %w(config/database.yml)
+    
     # SSL Certificates. If you specify an SSL certificate name then
     # the gem will create an 'https' configuration for this application
     # TODO: Upload and install the keys on the server
@@ -218,9 +233,6 @@ end
     # set :ssl_key, "/path/to/key/for/my_app.key
     # or
     # set :ssl_certificate, "name_of_installed_certificate"
-
-    # Comma separated list of additional domains for Apache
-    # set :domain_aliases, "www.example.com,dev.example.com"
 
     # SSH options. The forward agent option is used so that loopback logins
     # with keys work properly

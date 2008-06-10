@@ -20,6 +20,7 @@
 # Hook tasks into the standard deployment system
 
 after "deploy:setup",
+  "deploy:shared:local:setup",
   "configure:logrotation",
   "configure:monit",
   "configure:mongrel",
@@ -29,8 +30,12 @@ after "deploy:setup",
 after "deploy:cold",
   "deploy:monit:reload"
 
-after "deploy:update_code",
+after "deploy:finalize_update",
+  "deploy:shared:local:symlink",
   "gems:install"
+
+after "deploy:update",
+  "deploy:cleanup"
 
 before "deploy:migrate",
   "db:check:config",

@@ -38,3 +38,7 @@ ssh_options[:forward_agent] = true
 # Default system dependencies
 depend :remote, :gem, "rails", ">=2"
 depend :remote, :command, "mongrel_rails"
+
+# Default shared areas
+_cset :local_shared_dirs, []
+_cset :local_shared_files, []
