@@ -31,12 +31,35 @@ namespace :deploy do
   end
   depend :remote, :command, monit_command
 
-  #Override start, stop and restart so that they use Monit to restart the
+  def mongrel_cluster_command(event)
+    "#{mongrel_command} cluster::#{event} -C #{mongrel_config_file}" <<
+    if event == "status"
+      ""
+    else
+      " --clean"
+    end
+  end
+
+  def monitor_cluster_command(event)
+    case event
+    when "start","restart"
+      "#{monit_command} -g #{application} monitor all"
+    when "stop"
+      "#{monit_command} -g #{application} unmonitor all"
+    else
+      nil 
+    end
+  end
+
+  #Override start, stop and restart so that they use mongrel to restart the
   #application servers
-  %W(start stop restart status).each do |event|
+  %w(start stop restart status).each do |event|
     desc "Ask mongrel to #{event} your application."
     task event, :roles => :app, :except => {:no_release => true } do
-      try_sudo "#{mongrel_command} cluster::#{event} -C #{mongrel_config_file} --clean"
+      try_sudo mongrel_cluster_command(event)
+      if cmd = monitor_cluster_command(event)
+        sudo cmd
+      end
     end
   end
 

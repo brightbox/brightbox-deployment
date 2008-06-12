@@ -23,7 +23,7 @@ def rake_task(taskname)
   rake_env = fetch(:rake_env, "")
   directory = current_release 
 
-  "cd #{directory}; #{rake} RAILS_ENV=#{rails_env} #{rake_env} #{taskname}"
+  %Q{sh -c 'cd #{directory}; #{rake} RAILS_ENV=#{rails_env} #{rake_env} #{taskname}'}
 end
 
 def on_one_line(cmd_list)
