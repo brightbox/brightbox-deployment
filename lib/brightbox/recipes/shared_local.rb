@@ -34,10 +34,10 @@ namespace :deploy do
        shared between releases.
       )
       task :setup, :except => {:no_release => true} do
-        dirs = local_shared_files.collect do |file|
+        dirs = local_shared_files.to_a.collect do |file|
           File.join(shared_path, File.dirname(file))
         end
-        dirs += local_shared_dirs.collect do |dir|
+        dirs += local_shared_dirs.to_a.collect do |dir|
           File.join(shared_path, dir)
         end
         try_sudo "umask 02 && mkdir -p #{dirs.join(' ')}" unless dirs.empty?
@@ -49,7 +49,7 @@ namespace :deploy do
       :local_shared_files
       }
       task :symlink, :except => {:no_release => true} do
-        resources = local_shared_dirs+local_shared_files
+        resources = local_shared_dirs.to_a+local_shared_files.to_a
         run %Q{
           cd #{latest_release} &&
           rm -rf #{resources.join(' ')} 
