@@ -103,6 +103,7 @@ end
         -h #{mongrel_host}
         -C #{mongrel_config_file}
         -P #{mongrel_pid_file}
+        -e #{rails_env}
     END
         )
   end
