@@ -219,6 +219,9 @@ end
     # to share between the releases of your application on a particular
     # server. It uses the same shared area as the log files.
     #
+    # NOTE: local areas trump global areas, allowing you to have some
+    # servers using local assets if required.
+    #
     # So if you have an 'upload' directory in public, add 'public/upload'
     # to the :local_shared_dirs array.
     # If you want to share the database.yml add 'config/database.yml'
@@ -236,6 +239,9 @@ end
     # between all your servers. Specify the path to the root of that area
     # in :global_shared_path. Defaults to the same value as :shared_path.
     # set :global_shared_path, "/srv/share/myapp"
+    #
+    # NOTE: local areas trump global areas, allowing you to have some
+    # servers using local assets if required.
     #
     # Beyond that it is the same as the local shared area.
     # So if you have an 'upload' directory in public, add 'public/upload'
