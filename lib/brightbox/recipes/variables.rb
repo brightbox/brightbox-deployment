@@ -26,7 +26,7 @@ _cset :mongrel_host, :local
 _cset :mongrel_port, 9200
 _cset :mongrel_servers, 2
 _cset(:mongrel_config_file) {File.join(deploy_to, "#{application}_mongrel_config.yml")}
-case :mongrel_host
+case mongrel_host
 when :local, :remote
   _cset :mongrel_check_url, "http://localhost"
 else
