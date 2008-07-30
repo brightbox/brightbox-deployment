@@ -216,15 +216,37 @@ end
 
     ## Local Shared Area
     # These are the list of files and directories that you want
-    # to share between all the releases of your application.
+    # to share between the releases of your application on a particular
+    # server. It uses the same shared area as the log files.
+    #
     # So if you have an 'upload' directory in public, add 'public/upload'
     # to the :local_shared_dirs array.
     # If you want to share the database.yml add 'config/database.yml'
     # to the :local_shared_files array.
+    #
     # The shared area is prepared with 'deploy:setup' and all the shared
     # items are symlinked in when the code is updated.
     # set :local_shared_dirs, %w(public/upload)
     # set :local_shared_files, %w(config/database.yml)
+    
+    ## Global Shared Area
+    # These are the list of files and directories that you want
+    # to share between all releases of your application across all servers.
+    # For it to work you need a directory on a network file server shared
+    # between all your servers. Specify the path to the root of that area
+    # in :global_shared_path. Defaults to the same value as :shared_path.
+    # set :global_shared_path, "/srv/share/myapp"
+    #
+    # Beyond that it is the same as the local shared area.
+    # So if you have an 'upload' directory in public, add 'public/upload'
+    # to the :global_shared_dirs array.
+    # If you want to share the database.yml add 'config/database.yml'
+    # to the :global_shared_files array.
+    #
+    # The shared area is prepared with 'deploy:setup' and all the shared
+    # items are symlinked in when the code is updated.
+    # set :global_shared_dirs, %w(public/upload)
+    # set :global_shared_files, %w(config/database.yml)
     
     # SSL Certificates. If you specify an SSL certificate name then
     # the gem will create an 'https' configuration for this application
