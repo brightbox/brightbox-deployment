@@ -73,8 +73,10 @@ EOT
 end
 
 def balancer_members
-  (@port..@port+@mongrels-1).collect do |i|
-    "  server #{@mongrelhost}:#{i};"
+  @mongrelhost.split(",").collect do |host|
+    (@port..@port+@mongrels-1).collect do |i|
+      "  server #{@mongrelhost}:#{i};"
+    end
   end.join("\n")
 end
 

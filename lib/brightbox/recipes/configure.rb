@@ -66,13 +66,21 @@ namespace :configure do
 
   }
   task webserver, :roles => :web, :except => {:no_release => true} do
+    app_hosts = case mongrel_host
+                when :local
+                  "localhost"
+                when :remote
+                  roles[:app].servers.join(",")
+                else
+                  mongrel_host
+                end
     sudo on_one_line( <<-END
         #{send(webserver.to_s + "_setup")}
         -n #{application}
         -d #{domain}
         #{'-a '+domain_aliases if domain_aliases}
         -w #{File.join(current_path, 'public')}
-        -h #{mongrel_host}
+        -h #{app_hosts}
         -p #{mongrel_port}
         -s #{mongrel_servers}
         #{'-c '+ssl_certificate if ssl_certificate} 
@@ -87,20 +95,28 @@ end
   on the specified ports of the application server(s).
 
     :application      Name of the application
-    :mongrel_host     Name of application layer host (default localhost)
+    :mongrel_host     Address for mongrels to listen to (default localhost)
     :mongrel_port     Start port of the mongrel cluster (default 8000)
     :mongrel_servers  Number of servers on app host (default 2)
     :mongrel_pid_file The name of the file containing the mongrel PID 
 
   }
   task :mongrel, :roles => :app, :except => {:no_release => true} do
+    listen_address = case mongrel_host
+                     when :local
+                       "localhost"
+                     when :remote
+                       "0.0.0.0"
+                     else
+                       mongrel_host
+                     end
     sudo on_one_line( <<-END
         #{mongrel_setup}
         -n #{application}
         -r #{current_path}
         -p #{mongrel_port}
         -s #{mongrel_servers}
-        -h #{mongrel_host}
+        -h #{listen_address}
         -C #{mongrel_config_file}
         -P #{mongrel_pid_file}
         -e #{rails_env}
@@ -118,17 +134,26 @@ end
     :mongrel_servers  Number of servers on app host (default 2)
 
   }
-  task :monit, :except => {:no_release => true} do
+  task :monit, :roles => :app, :except => {:no_release => true} do
+    listen_address = case :mongrel_host
+                     when :local, :remote
+                       "localhost"
+                     else
+                       mongrel_host
+                     end
     sudo on_one_line( <<-END
         #{monit_setup}
         -n #{application}
         -u #{user}
         -r #{current_path}
-        -h #{mongrel_host}
+        -h #{listen_address}
         -p #{mongrel_port}
         -s #{mongrel_servers}
         -C #{mongrel_config_file}
         -P #{mongrel_pid_file}
+        -U #{mongrel_check_url}
+        -m #{mongrel_max_memory}
+        -c #{mongrel_max_cpu}
     END
         )
   end

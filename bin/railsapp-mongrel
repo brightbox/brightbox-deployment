@@ -26,40 +26,43 @@ require 'erb'
 
 @mongrelhost = "127.0.0.1"
 @mongrels = 2
+@port = 9200
 @railsenv = "production"
 @pidfile = "log/mongrel.pid"
+@appname = File.basename($0)
 
 def has_required_options?
-  [@application, @config, @pidfile, @port, @mongrels, @railsenv, @railsroot, @mongrelhost].all?
+  [@application, @config, @railsroot].all?
 end
 
 OptionParser.new do |opts|
   opts.banner = "brightbox-mongrel creates a Mongrel config for a Rails app\n"
-  opts.banner << "Usage: #{$0} [options] [args]"
+  opts.banner << "Usage: #{@appname} [options] [args]"
 
   opts.on("-n", "--name APPLICATION_NAME",
-    "Name of application (a short useful name for the app such as: myforum)"
+    "Name of application (a short useful name",
+    "for the app such as: myforum)"
   ) { |value| @application = value }
   opts.on("-r", "--railsroot RAILS_ROOT",
-    "Full path to rails root (e.g: /home/rails/myforum/current)"
+    "Full path to rails root","(e.g: /home/rails/myforum/current)"
   ) { |value| @railsroot = value }
   opts.on("-C", "--config MONGREL_CONFIG_FILE",
-    "Location of this application's mongrel config file"
+    "Location of this application's mongrel","config file"
   ) { |value| @config = value }
   opts.on("-e", "--railsenv RAILS_ENV",
     "rails environment (default: #{@railsenv})"
   ) { |value| @railsenv = value }
   opts.on("-p", "--port MONGREL_PORT",
-    "Port of the first mongrel service (e.g: 9200)"
+    "Port of the first mongrel service","(default: #{@port})"
   ) { |value| @port = value.to_i }
   opts.on("-s", "--servers MONGRELS",
-    "Number of mongrel servers running (default: #{@mongrels})"
+    "Number of mongrel servers running","(default: #{@mongrels})"
   ) { |value| @mongrels = value.to_i }
   opts.on("-h", "--mongrelhost MONGREL_HOST",
-    "IP/host where mongrel is running (default: #{@mongrelhost})"
+    "IP/host where mongrel is running","(default: #{@mongrelhost})"
   ) { |value| @mongrelhost = value }    
   opts.on("-P", "--pidfile MONGREL_PID_FILE",
-    "Name of Mongrel PID file template (default: #{@pidfile})"
+    "Name of Mongrel PID file template","(default: #{@pidfile})"
   ) { |value| @pidfile = value }    
  
   begin

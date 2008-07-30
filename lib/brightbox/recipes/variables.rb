@@ -26,7 +26,12 @@ _cset :mongrel_host, :local
 _cset :mongrel_port, 9200
 _cset :mongrel_servers, 2
 _cset(:mongrel_config_file) {File.join(deploy_to, "#{application}_mongrel_config.yml")}
-_cset :mongrel_check_url, "http://localhost"
+case :mongrel_host
+when :local, :remote
+  _cset :mongrel_check_url, "http://localhost"
+else
+  _cset :mongrel_check_url, "http://#{mongrel_host}"
+end
 _cset :mongrel_max_memory, 110
 _cset :mongrel_max_cpu, 80
 _cset(:domain) { abort "You need to set the :domain variable, e.g set :domain 'www.example.com'" }

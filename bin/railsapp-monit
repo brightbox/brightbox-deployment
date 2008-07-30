@@ -23,6 +23,7 @@ require 'rubygems'
 require 'optparse'
 require 'fileutils'
 require 'erb'
+require 'uri'
 
 @mongrelhost = "127.0.0.1"
 @mongrels = 2
@@ -30,45 +31,61 @@ require 'erb'
 @railsuser = "rails"
 @railsgroup = "rails"
 @pidfile = "log/mongrel.pid"
+@port = 9200
+@check_url = "http://localhost"
+@max_memory = 110
+@max_cpu = 80
+@appname = File.basename($0)
 
 def has_required_options?
-  [@railsuser, @railsgroup, @application, @config, @pidfile, @port, @mongrels, @railsenv, @railsroot, @mongrelhost].all?
+  [@application, @config, @port, @railsroot].all?
 end
 
 OptionParser.new do |opts|
   opts.banner = "brightbox-monit creates a Monit config for a Rails app\n"
-  opts.banner << "Usage: #{$0} [options] [args]"
+  opts.banner << "Usage: #{@appname} [options] [args]"
 
   opts.on("-n", "--name APPLICATION_NAME",
-    "Name of application (a short useful name for the app such as: myforum)"
+    "Name of application (a short useful name",
+    "for the app such as: myforum)"
   ) { |value| @application = value }
   opts.on("-r", "--railsroot RAILS_ROOT",
-    "Full path to rails root (e.g: /home/rails/myforum/current)"
+    "Full path to rails root",
+    "(e.g: /home/rails/myforum/current)"
   ) { |value| @railsroot = value }
   opts.on("-C", "--config MONGREL_CONFIG_FILE",
-    "Location of this application's mongrel config file"
+    "Location of this application's mongrel","config file"
   ) { |value| @config = value }
   opts.on("-e", "--railsenv RAILS_ENV",
     "rails environment (default: #{@railsenv})"
   ) { |value| @railsenv = value }
   opts.on("-p", "--port MONGREL_PORT",
-    "Port of the first mongrel service (e.g: 9200)"
+    "Port of the first mongrel service","(default: #{@port})"
   ) { |value| @port = value.to_i }
   opts.on("-s", "--servers MONGRELS",
-    "Number of mongrel servers running (default: #{@mongrels})"
+    "Number of mongrel servers running","(default: #{@mongrels})"
   ) { |value| @mongrels = value.to_i }
   opts.on("-h", "--mongrelhost MONGREL_HOST",
-    "IP/host where mongrel is running (default: #{@mongrelhost})"
+    "IP/host where mongrel is running","(default: #{@mongrelhost})"
   ) { |value| @mongrelhost = value }    
   opts.on("-u", "--user USERNAME",
-    "The unix username the mongrel process should be started as (default: #{@railsuser})"
+    "The unix username the mongrel process","should be started as (default: #{@railsuser})"
   ) { |value| @railsuser = value }
   opts.on("-g", "--group USERNAME",
-    "The unix group the mongrel process should be started as (default: #{@railsgroup})"
+    "The unix group the mongrel process should","be started as (default: #{@railsgroup})"
   ) { |value| @railsgroup = value }
   opts.on("-P", "--pidfile MONGREL_PID_FILE",
-    "Name of Mongrel PID file template (default: #{@pidfile})"
+    "Name of Mongrel PID file template","(default: #{@pidfile})"
   ) { |value| @pidfile = value }    
+  opts.on("-U", "--checkurl URL_TO_CHECK",
+    "URL to check to make sure application is","live (default: #{@check_url})"
+  ) { |value| @check_url = value }    
+  opts.on("-m", "--maxmemory MAX_MONGREL_MEM",
+    "Amount of memory mongrel can use before","being killed (default: #{@max_memory}Mb)"
+  ) { |value| @max_memory = value }    
+  opts.on("-c", "--maxcpu MAX_MONGREL_CPU",
+    "Amount of cpu mongrel can use before","being killed (default: #{@max_cpu}%)"
+  ) { |value| @max_cpu = value }    
  
   begin
     opts.parse(ARGV)
@@ -96,6 +113,12 @@ def mongrel_ports
   @port..(@port + @mongrels - 1)
 end
 
+def updated_url(current_url, new_port)
+  url_holder = URI.parse(current_url)
+  url_holder.port = new_port
+  url_holder.to_s
+end
+
 process_pid_file
 @mongrel_instances = mongrel_ports.collect do |port|
   [port, File.join(@railsroot, port_pid_file(port))]
@@ -111,12 +134,13 @@ check process mongrel_<%= @application %>_<%= port %> with pidfile <%= pidfile %
   stop program = "/usr/bin/mongrel_rails cluster::stop -C <%= @config %> --clean --only <%= port %>"
     as uid #{@railsuser} and gid #{@railsgroup}
 
-  if failed host <%= @mongrelhost %> port <%= port %> protocol http
-    with timeout 30 seconds
+  if failed url <%= updated_url(@check_url, port) %>
+    with timeout 15 seconds
+            for 2 cycles
     then restart
 
-  if mem > 110 Mb for 3 cycles then restart
-  if cpu > 80% for 5 cycles then restart
+  if mem > #{@max_memory} Mb for 3 cycles then restart
+  if cpu > #{@max_cpu}% for 5 cycles then restart
   #if loadavg(5min) greater than 10 for 8 cycles then restart
   if 20 restarts within 20 cycles then timeout
 <% end %>

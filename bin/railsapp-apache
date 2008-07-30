@@ -114,8 +114,10 @@ def configure_ports
 end
 
 def balancer_members
-  (@port..@port+@mongrels-1).collect do |i|
-    "    BalancerMember http://#{@mongrelhost}:#{i} retry=5"
+  @mongrelhost.split(",").collect do |host|
+    (@port..@port+@mongrels-1).collect do |i|
+      "    BalancerMember http://#{host}:#{i} retry=5"
+    end
   end.join("\n")
 end
 

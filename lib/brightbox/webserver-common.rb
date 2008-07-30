@@ -24,13 +24,14 @@ require 'fileutils'
 
 @mongrelhost = "127.0.0.1"
 @mongrels = 2
+@port = 9200
 @aliases = nil
 @certificate = nil
 @key_file = nil
 @app_name = File.basename $0
 
 def has_required_options?
-  [@application, @webroot, @domain, @port].all? &&
+  [@application, @webroot, @domain].all? &&
     (@certificate || @certificate_key.nil?)
 end
 
@@ -71,35 +72,43 @@ OptionParser.new do |opts|
   opts.banner << "Usage: #{@app_name} [options] [args]"
 
   opts.on("-n APPLICATION_NAME", "--name APPLICATION_NAME",
-    "Name of application (a short useful name for the app such as 'myforum')"
+    "Name of application (a short useful",
+    "name for the app such as 'myforum')"
   ) { |value| @application = value }
   
   opts.on("-w", "--webroot WEB_ROOT",
-    "Full path to web root (e.g: /home/rails/myforum/current/public)"
+    "Full path to web root",
+    "(e.g: /home/rails/myforum/current/public)"
   ) { |value| @webroot = value }
   
   opts.on("-d", "--domain DOMAIN_NAME",
-    "Domain name for application (e.g: www.example.com)"
+    "Domain name for application",
+    "(e.g: www.example.com)"
   ) { |value| @domain = value }
   
   opts.on("-a", "--aliases ALIASES",
-    "Aliases for domain name, comma separated (e.g: www.example.org,www.example.net)"
+    "Aliases for domain name, comma separated",
+    "(e.g: www.example.org,www.example.net)"
   ) { |value| @aliases = value.to_s.split(',').join(' ')}
   
   opts.on("-p", "--port MONGREL_PORT", Integer,
-    "Port of the first mongrel service"
+    "Port of the first mongrel service",
+    "(default: #{@port})"
   ) { |value| @port = value.to_i }
   
   opts.on("-s", "--servers MONGRELS", Integer,
-    "Number of mongrel servers running (default: #{@mongrels})"
+    "Number of mongrel servers running",
+    "(default: #{@mongrels})"
   ) { |value| @mongrels = value.to_i }
   
   opts.on("-h", "--mongrelhost MONGREL_HOST",
-    "ip/host where mongrel is running (default: #{@mongrelhost})"
+    "ip/host where mongrel is running",
+    "(default: #{@mongrelhost})"
   ) { |value| @mongrelhost = value }
 
   opts.on("-c", "--ssl-cert CERTIFICATE_NAME",
-          "create an SSL configuration using CERTIFICATE_NAME"
+          "create an SSL configuration",
+          "using CERTIFICATE_NAME"
          ) { |value| @certificate = value }
 
   opts.on("-k", "--ssl-key KEY_NAME",
