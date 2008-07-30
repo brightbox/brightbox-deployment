@@ -41,6 +41,7 @@ _cset :runner, user
 _cset :use_sudo, false
 _cset :ssl_certificate, nil
 _cset :ssl_key, nil
+_cset :rails_env, "production"
 ssh_options[:forward_agent] = true
 
 # Default system dependencies

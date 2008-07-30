@@ -135,7 +135,7 @@ end
 
   }
   task :monit, :roles => :app, :except => {:no_release => true} do
-    listen_address = case :mongrel_host
+    listen_address = case mongrel_host
                      when :local, :remote
                        "localhost"
                      else
