@@ -20,6 +20,7 @@
 # Hook tasks into the standard deployment system
 
 after "deploy:setup",
+  "deploy:shared:global:setup",
   "deploy:shared:local:setup",
   "configure:logrotation",
   "configure:monit",
@@ -31,6 +32,7 @@ after "deploy:cold",
   "deploy:monit:reload"
 
 after "deploy:finalize_update",
+  "deploy:shared:global:symlink",
   "deploy:shared:local:symlink",
   "gems:install"
 

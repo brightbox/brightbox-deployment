@@ -51,3 +51,6 @@ depend :remote, :command, "mongrel_rails"
 # Default shared areas
 _cset :local_shared_dirs, []
 _cset :local_shared_files, []
+_cset :global_shared_dirs, []
+_cset :global_shared_files, []
+_cset(:global_shared_path) { shared_path }
