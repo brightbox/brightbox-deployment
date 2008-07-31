@@ -75,7 +75,7 @@ end
 def balancer_members
   @mongrelhost.split(",").collect do |host|
     (@port..@port+@mongrels-1).collect do |i|
-      "  server #{@mongrelhost}:#{i};"
+      "  server #{host}:#{i};"
     end
   end.join("\n")
 end
