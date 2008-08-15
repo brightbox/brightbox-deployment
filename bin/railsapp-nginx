@@ -23,16 +23,8 @@
 WEBSERVER='nginx'
 require 'brightbox/webserver-common'
 
-
-def http_config
+def standard_server_contents
 <<-EOT
-#{config_time_stamp}
-upstream #{@application}_mongrels {
-  fair;
-  # List of mongrels
-#{balancer_members}
-}
-server {
   server_name #{@domain} #{local_app_alias} #{@aliases};
   root #{@webroot};
   access_log /var/log/web/#{@application}.log main;
@@ -42,8 +34,11 @@ server {
     rewrite ^(.*)$ /system/maintenance.html last;
     break;
   }
+EOT
+end
 
-  location / {
+def standard_location_contents
+<<-EOT
     ## General Rails error page stuff
     error_page 404              /404.html;
     error_page 422              /422.html;
@@ -53,6 +48,7 @@ server {
     # If the file exists then stop here. Saves 4 more stats and some
     # rewrites.
     if (-f $request_filename) { 
+      expires max;
       break; 
     }
     # Rails page caching
@@ -67,6 +63,45 @@ server {
     if (!-f $request_filename) {
       proxy_pass http://#{@application}_mongrels;
     }
+EOT
+end
+
+def http_config
+<<-EOT
+#{config_time_stamp}
+upstream #{@application}_mongrels {
+  fair;
+  # List of mongrels
+#{balancer_members}
+}
+server {
+  listen 80;
+  #{standard_server_contents}
+  location / {
+    #{standard_location_contents}
+  }
+}
+EOT
+end
+
+def ssl_certificate_key
+  if @key_file
+    "  ssl_certificate_key #{key_file};"
+  end
+end
+
+
+def https_config
+<<-EOT
+#{config_time_stamp}
+server {
+  listen 443;
+  ssl on;
+  ssl_certificate #{@certificate_file};
+  #{ssl_certificate_key}
+  #{standard_server_contents}
+  location / {
+    #{standard_location_contents}
   }
 }
 EOT
@@ -85,3 +120,10 @@ end
 #Create a normal HTTP config
 @config=http_config
 configure_site(@application)
+
+#Create an SSL site if requested
+if @certificate
+  @config=https_config
+  configure_site("default-ssl")
+end
+

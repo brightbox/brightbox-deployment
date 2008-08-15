@@ -66,10 +66,15 @@ namespace :deploy do
   namespace :web do
 
     desc %Q{
-      Reload the apache webserver
+      Reload the webserver
     }
     task :reload, :roles => :web, :except => {:no_release => true } do
-      sudo "/usr/sbin/invoke-rc.d apache2 reload"
+      %w(apache nginx).each do |webserver|
+        initscript = "/etc/init.d/#{webserver}"
+        sudo %Q{
+          sh -c '[ -f #{initscript} ] && #{initscript} reload || true'
+        }
+      end
     end
 
     desc %Q{

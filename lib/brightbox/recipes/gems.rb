@@ -24,7 +24,7 @@ namespace :gems do
   [internal]Run the gems install task in the application.
   }
   task :install, :roles => :app do
-    run rake_task("environment")
+    run rake_task("gems")
     sudo rake_task("gems:install")
   end
 

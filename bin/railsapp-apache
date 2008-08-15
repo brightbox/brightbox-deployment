@@ -101,8 +101,11 @@ end
 
 
 def activate_modules(modules)
-  modules.each do |mod|
-    system %Q{/usr/sbin/a2enmod "#{mod}"}
+  enmod="/usr/sbin/a2enmod"
+  if File.executable?(enmod)
+    modules.each do |mod|
+      system %Q{#{enmod} "#{mod}"}
+    end
   end
 end
 
