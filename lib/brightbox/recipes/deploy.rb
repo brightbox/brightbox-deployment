@@ -69,7 +69,7 @@ namespace :deploy do
       Reload the webserver
     }
     task :reload, :roles => :web, :except => {:no_release => true } do
-      %w(apache nginx).each do |webserver|
+      %w(apache2 nginx).each do |webserver|
         initscript = "/etc/init.d/#{webserver}"
         sudo %Q{
           sh -c '[ -f #{initscript} ] && #{initscript} reload || true'
