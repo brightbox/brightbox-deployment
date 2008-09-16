@@ -20,12 +20,33 @@
 
 namespace :gems do
 
+  def gem_dependencies?
+    (fetch(:dependencies,{})[:remote]||{})[:gem]
+  end
+
+  def install_gems
+    deps = gem_dependencies?
+    deps.each do |gemspec|
+      gem = gemspec[0]
+      version = gemspec[1]
+      puts "Checking for #{gem} at #{version}"
+      sudo %Q{sh -c "
+        gem spec #{gem} --version '#{version}' 2>/dev/null|egrep -q '^name:' ||
+          sudo gem install -y --no-ri --no-rdoc --version '#{version}' #{gem}"
+      }
+    end
+  end
+
   desc %Q{
   [internal]Run the gems install task in the application.
   }
-  task :install, :roles => :app do
-    run rake_task("gems")
-    sudo rake_task("gems:install")
+  task :install do
+    if gem_dependencies?
+      install_gems
+    else
+      run rake_task("gems")
+      sudo rake_task("gems:install")
+    end
   end
 
 end

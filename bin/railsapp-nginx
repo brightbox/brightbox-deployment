@@ -45,6 +45,12 @@ def standard_location_contents
     error_page 500 502 503 504  /500.html;
     error_page 403              /403.html;
 
+    # Send to mongrels if not a read request
+    if ($request_method !~ "GET|HEAD") {
+      proxy_pass http://#{@application}_mongrels;
+      break;
+    }
+
     # If the file exists then stop here. Saves 4 more stats and some
     # rewrites.
     if (-f $request_filename) { 
@@ -62,6 +68,7 @@ def standard_location_contents
     # then send to the mongrels
     if (!-f $request_filename) {
       proxy_pass http://#{@application}_mongrels;
+      break;
     }
 EOT
 end
