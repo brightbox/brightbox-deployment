@@ -29,11 +29,6 @@ def standard_server_contents
   root #{@webroot};
   access_log /var/log/web/#{@application}.log main;
     
-  # Capistrano maintenance message support
-  if (-f $document_root/system/maintenance.html) {
-    rewrite ^(.*)$ /system/maintenance.html last;
-    break;
-  }
 EOT
 end
 
@@ -42,8 +37,18 @@ def standard_location_contents
     ## General Rails error page stuff
     error_page 404              /404.html;
     error_page 422              /422.html;
-    error_page 500 502 503 504  /500.html;
+    error_page 500              /500.html;
+    error_page 502              /502.html;
+    error_page 504              /504.html;
     error_page 403              /403.html;
+
+    error_page 503              /system/maintenance.html;
+    
+    # Capistrano maintenance message support
+    if (-f $document_root/system/maintenance.html) {
+      return 503;
+      break;
+    }
 
     # Send to mongrels if not a read request
     if ($request_method !~ "GET|HEAD") {
@@ -54,7 +59,7 @@ def standard_location_contents
     # If the file exists then stop here. Saves 4 more stats and some
     # rewrites.
     if (-f $request_filename) { 
-      expires max;
+      expires #{@maxage};
       break; 
     }
     # Rails page caching
@@ -84,6 +89,10 @@ upstream #{@application}_mongrels {
 server {
   listen 80;
   #{standard_server_contents}
+  location /system {
+    add_header Cache-Control no-cache;
+  }
+
   location / {
     #{standard_location_contents}
   }
@@ -107,6 +116,11 @@ server {
   ssl_certificate #{@certificate_file};
   #{ssl_certificate_key}
   #{standard_server_contents}
+
+  location /system {
+    add_header Cache-Control no-cache;
+  }
+
   location / {
     #{standard_location_contents}
   }

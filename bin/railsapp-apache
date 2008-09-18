@@ -36,10 +36,15 @@ def http_config
   DocumentRoot #{@webroot}
 
   <Directory "#{@webroot}">
+    Header set Cache-Control "max-age=#{@maxage}"
     Options FollowSymLinks
     AllowOverride None
     Order allow,deny
     Allow from all
+  </Directory>
+
+  <Directory "#{@webroot}/system">
+    Header set Cache-Control "no-cache"
   </Directory>
 
   # Configure mongrel_cluster
@@ -125,8 +130,8 @@ def balancer_members
 end
 
 #MAIN PROGRAM
-@apache_http_modules = %w(proxy_balancer proxy_http rewrite)
-@apache_https_modules = %w(ssl headers)
+@apache_http_modules = %w(proxy_balancer proxy_http rewrite headers deflate)
+@apache_https_modules = %w(ssl)
 
 #Create a normal HTTP config
 @config=http_config
