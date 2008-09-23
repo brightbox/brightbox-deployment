@@ -28,6 +28,7 @@ require 'fileutils'
 @aliases = nil
 @certificate = nil
 @key_file = nil
+@maxage = 315360000
 @app_name = File.basename $0
 
 def has_required_options?
@@ -114,6 +115,11 @@ OptionParser.new do |opts|
   opts.on("-k", "--ssl-key KEY_NAME",
           "Name of private key to use CERTIFICATE"
          ) { |value| @certificate_key = value }
+
+  opts.on("-m", "--max-age MAX_AGE",
+          "Number of seconds to keep static assets in cache",
+          "(default: #{@maxage})"
+         ) { |value| @maxage = value }
  
   begin
     opts.parse(ARGV)

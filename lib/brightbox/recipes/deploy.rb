@@ -85,6 +85,17 @@ namespace :deploy do
       reload if releases.length == 1
     end
 
+    desc %Q{
+      Return a 503 Service Temporarily Unavailable error code and display
+      the 'system maintenance' page.
+    }
+    task :disable, :roles => :web, :except => { :no_release => true } do
+      on_rollback {
+        run "rm #{shared_path}/system/maintenance.html"
+      }
+      run "ln -s #{shared_path}/system/index.html #{shared_path}/system/maintenance.html"
+    end
+
   end
 
   namespace :monit do
