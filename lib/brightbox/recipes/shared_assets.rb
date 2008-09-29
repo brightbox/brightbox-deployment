@@ -33,7 +33,8 @@ namespace :deploy do
 
       def setup_shared_dirs(shared_files, shared_dirs, shared_path)
         dirs = fetch_shared_dirs(shared_files, shared_dirs, shared_path)
-        try_sudo "umask 02 && mkdir -p #{dirs.join(' ')}" unless dirs.empty?
+        dir_list = dirs.join(' ')
+        run "#{try_sudo} mkdir -p #{dir_list} && #{try_sudo} chmod g+w #{dir_list}" unless dirs.empty?
       end
 
       def create_shared_links(shared_files, shared_dirs, shared_path) 
