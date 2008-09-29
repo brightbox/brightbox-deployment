@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+#    Brightbox - Easy Ruby Web Application Deployment
+#    Copyright (C) 2008, Neil Wilson, Brightbox Systems
+#
+#    This file is part of the Brightbox deployment system
+#
+#    Brightbox gem is free software: you can redistribute it and/or modify it
+#    under the terms of the GNU Affero General Public License as published
+#    by the Free Software Foundation, either version 3 of the License,
+#    or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#    Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General
+#    Public License along with this program.  If not, see
+#    <http://www.gnu.org/licenses/>.
+#
+
+begin
+  require 'rubygems'
+rescue LoadError
+  # no rubygems to load, so we fail silently
+end
+
+require 'optparse'
+require 'brightbox/maintenance'
+
+@options = {}
+@progname = File.basename($0)
+
+
+OptionParser.new do |opts|
+  opts.banner = "Create the default maintenance site\n"
+  opts.banner << "Usage: #{@progname} <directory_name>\n\n"
+
+  begin
+    opts.parse!(ARGV)
+  rescue OptionParser::ParseError => e
+    warn e.message
+    puts opts
+    exit 1
+  end
+end
+
+
+abort "Please specify the directory where the maintenance site should live e.g. '#{@progname} .'" if ARGV.empty?
+abort "Too many arguments; please provide a single directory name." unless ARGV.length == 1
+abort "'#{ARGV.first}' does not exist." unless File.exists?(ARGV.first)
+abort "'#{ARGV.first}' is not a directory." unless File.directory?(ARGV.first)
+
+
+system_dir = ARGV.shift
+deploy_maintenance_page(system_dir)

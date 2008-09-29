@@ -17,35 +17,8 @@
 #    Public License along with this program.  If not, see
 #    <http://www.gnu.org/licenses/>.
 #
-# Hook tasks into the standard deployment system
 
-after "deploy:setup",
-  "deploy:shared:global:setup",
-  "deploy:shared:local:setup",
-  "configure:maintenance",
-  "configure:logrotation",
-  "configure:monit",
-  "configure:mongrel",
-  "configure:apache",
-  "configure:nginx"
-
-after "deploy:cold",
-  "deploy:monit:reload"
-
-after "deploy:finalize_update",
-  "deploy:shared:global:symlink",
-  "deploy:shared:local:symlink",
-  "gems:install"
-
-after "deploy:update",
-  "deploy:cleanup"
-
-before "deploy:migrate",
-  "db:check:config",
-  "db:create"
-
-after "deploy:start",
-  "deploy:web:reload_if_new"
-
-after "deploy:restart",
-  "deploy:web:reload_if_new"
+def deploy_maintenance_page(system_directory)
+  maintenance_site = File.join(File.dirname(__FILE__),"maintenance-site.tar.gz")
+  system ("tar --directory #{system_directory} --extract --gzip --file #{maintenance_site}")
+end

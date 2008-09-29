@@ -19,34 +19,34 @@
 #
 
 def monit_setup
-  "/usr/bin/railsapp-monit"
+  "railsapp-monit"
 end
 depend :remote, :command, monit_setup
 
 def apache_setup
-  "/usr/bin/railsapp-apache"
+  "railsapp-apache"
 end
 depend :remote, :command, apache_setup
 
 def nginx_setup
-  "/usr/bin/railsapp-nginx"
+  "railsapp-nginx"
 end
 depend :remote, :command, nginx_setup
 
 def mongrel_setup
-  "/usr/bin/railsapp-mongrel"
+  "railsapp-mongrel"
 end
 depend :remote, :command, mongrel_setup
 
 def logrotate_setup
-  "/usr/bin/railsapp-logrotate"
+  "railsapp-logrotate"
 end
 depend :remote, :command, logrotate_setup
 
-def mysql_setup
-  "/usr/bin/railsapp-check"
+def maintenance_setup
+  "railsapp-maintenance"
 end
-depend :remote, :command, mysql_setup
+depend :remote, :command, maintenance_setup
 
 namespace :configure do
 
@@ -180,6 +180,13 @@ end
   end
 
   desc %Q{
+  [internal]Create the default maintenance website on the appropriate web servers in the shared area.
+  }
+  task :maintenance, :roles => :web, :except => {:no_release => true} do
+    run "#{maintenance_setup} #{shared_path}/system"
+  end
+
+  desc %Q{
   [internal]Run the check command if this application hasn't been
   deployed yet
   }
@@ -194,12 +201,5 @@ end
     end
   end
 
-  desc %Q{
-  [internal]Check the current database.yml file and update the 
-  details from the .my.cnf file on the server if it exists.
-  }
-  task :mysql, :roles => :db, :only => {:primary => true} do
-    try_sudo "#{mysql_setup} -n #{application} #{latest_release}/config/database.yml"
-  end
 
 end

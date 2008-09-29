@@ -30,7 +30,7 @@ end
 @server = Gem::Specification.new do |s|
   add_common(s)
   s.name = "brightbox-server-tools"
-  s.files = FileList["LICENSE", "Rakefile", "*.rb", "bin/railsapp-*","{lib,spec}/**/*.rb"].exclude(/recipe/).to_a
+  s.files = FileList["LICENSE", "Rakefile", "*.rb", "bin/railsapp-*","lib/**/*.{rb,gz}"].exclude(/recipe/).to_a
   s.summary = "Brightbox Server configuration scripts"
   s.executables = FileList["bin/railsapp-*"].sub(/bin\//,'')
 end
