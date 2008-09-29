@@ -53,4 +53,9 @@ abort "'#{ARGV.first}' is not a directory." unless File.directory?(ARGV.first)
 
 
 system_dir = ARGV.shift
-deploy_maintenance_page(system_dir)
+if File.exists?(File.join(system_dir, "index.html"))
+  puts "Existing site detected - leaving alone"
+else
+  puts "Deploying default maintenance site"
+  deploy_maintenance_page(system_dir) 
+end
