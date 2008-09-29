@@ -36,6 +36,7 @@ _cset :mongrel_max_memory, 110
 _cset :mongrel_max_cpu, 80
 _cset(:domain) { abort "You need to set the :domain variable, e.g set :domain 'www.example.com'" }
 _cset :domain_aliases, nil
+_cset :max_age, nil
 _cset :user, "rails"
 _cset :runner, user
 _cset :use_sudo, false

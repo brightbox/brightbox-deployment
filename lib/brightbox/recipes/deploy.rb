@@ -85,16 +85,29 @@ namespace :deploy do
       reload if releases.length == 1
     end
 
+    def maintenance_page
+      "#{current_path}/system/maintenance.html"
+    end
+
     desc %Q{
-      Return a 503 Service Temporarily Unavailable error code and display
+      Return a 503 Service Temporarily Unavailable error code and display \
       the 'system maintenance' page.
     }
     task :disable, :roles => :web, :except => { :no_release => true } do
       on_rollback {
-        run "rm #{shared_path}/system/maintenance.html"
+        run "rm #{maintenance_page}"
       }
-      run "ln -s #{shared_path}/system/index.html #{shared_path}/system/maintenance.html"
+      run "ln -s #{File.dirname(maintenance_page)}/index.html #{maintenance_page}"
     end
+
+    desc %Q{
+      Makes the application web-accessible again. Removes the link \
+      to the maintenance area.
+    }
+    task :enable, :roles => :web, :except => { :no_release => true } do
+      run "rm #{maintenance_page}"
+    end
+
 
   end
 
