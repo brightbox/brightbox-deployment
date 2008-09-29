@@ -86,7 +86,7 @@ namespace :deploy do
     end
 
     def maintenance_page
-      "#{current_path}/system/maintenance.html"
+      "#{current_path}/public/system/maintenance.html"
     end
 
     desc %Q{
