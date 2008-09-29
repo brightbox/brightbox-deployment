@@ -39,7 +39,7 @@ end
   add_common(s)
   s.name = "brightbox"
   s.files = FileList["LICENSE", "Rakefile", "*.rb", "lib/**/*.rb","bin/brightbox"].exclude("lib/brightbox/webserver-common.rb").to_a
-  s.add_dependency("capistrano", ">= 2.3")
+  s.add_dependency("capistrano", ">= 2.5")
   s.summary = "Brightbox rails deployment scripts for Capistrano"
   s.executable = 'brightbox'
 end
