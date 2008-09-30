@@ -22,7 +22,7 @@
 require 'rubygems'
 require 'optparse'
 require 'fileutils'
-require 'erb'
+require 'brightbox/version'
 require 'uri'
 
 @mongrelhost = "127.0.0.1"
@@ -35,15 +35,13 @@ require 'uri'
 @check_url = "http://localhost"
 @max_memory = 110
 @max_cpu = 80
-@appname = File.basename($0)
 
 def has_required_options?
   [@application, @config, @port, @railsroot].all?
 end
 
-OptionParser.new do |opts|
-  opts.banner = "brightbox-monit creates a Monit config for a Rails app\n"
-  opts.banner << "Usage: #{@appname} [options] [args]"
+opts = OptionParser.new do |opts|
+  opts.banner = "#{opts.program_name} creates a Monit config for a Rails app\n#{opts.banner}"
 
   opts.on("-n", "--name APPLICATION_NAME",
     "Name of application (a short useful name",
@@ -124,34 +122,41 @@ process_pid_file
   [port, File.join(@railsroot, port_pid_file(port))]
 end
 
-TEMPLATE = <<EOT
-# Created by brightbox-monit at <%= Time.now %>
-<% @mongrel_instances.each do |port, pidfile| %>
-check process mongrel_<%= @application %>_<%= port %> with pidfile <%= pidfile %>
-  group <%= @application %>
-  start program = "/usr/bin/mongrel_rails cluster::start -C <%= @config %> --clean --only <%= port %>"
+def config_time_stamp
+  "# Created by #{opts.program_name} at #{Time.now}\n"
+end
+
+def mongrel_config(port, pidfile)
+%Q{
+check process mongrel_#{@application}_#{port} with pidfile #{pidfile}
+  group #{@application}
+  start program = "/usr/bin/mongrel_rails cluster::start -C #{@config} --clean --only #{port}"
     as uid #{@railsuser} and gid #{@railsgroup}
-  stop program = "/usr/bin/mongrel_rails cluster::stop -C <%= @config %> --clean --only <%= port %>"
+  stop program = "/usr/bin/mongrel_rails cluster::stop -C #{@config} --clean --only #{port}"
     as uid #{@railsuser} and gid #{@railsgroup}
 
-  if failed url <%= updated_url(@check_url, port) %>
+  if failed url #{updated_url(@check_url, port)}
     with timeout 15 seconds
             for 2 cycles
     then restart
 
   if mem > #{@max_memory} Mb for 3 cycles then restart
   if cpu > #{@max_cpu}% for 5 cycles then restart
-  #if loadavg(5min) greater than 10 for 8 cycles then restart
   if 20 restarts within 20 cycles then timeout
-<% end %>
-EOT
+}
+end
 
-template = ERB.new(TEMPLATE)
-config = template.result
+def monit_config
+  config_time_stamp +
+  @mongrel_instances.collect do |port, pidfile|
+    mongrel_config(port,pidfile)
+  end.join('\n')
+end
+
 filename = "/etc/monit/conf.d/rails-#{@application}.monitrc"
 if File.exists?(filename)
   FileUtils.mkdir_p("/etc/monit/archived-configs")
   FileUtils.cp filename, "/etc/monit/archived-configs/rails-#{@application}.monitrc.#{Time.now.strftime('%y%m%d%H%M%S')}"
 end
 
-File.open(filename, "w") { |f| f.write config }
+File.open(filename, "w") { |f| f.write monit_config }
