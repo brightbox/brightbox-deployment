@@ -29,15 +29,14 @@ require 'optparse'
 require 'brightbox/version'
 
 @options = {}
-@progname = File.basename($0)
 
 def has_required_options?
   [@server].all?
 end
 
-OptionParser.new do |opts|
+opts = OptionParser.new do |opts|
   opts.banner = "Set up your Rails application for deployment\n"
-  opts.banner << "Usage: #{@progname} [options] <directory_name>\n\n"
+  opts.banner << "Usage: #{opts.program_name} [options] <directory_name>\n\n"
 
   opts.on("-n APPLICATION_NAME", "--name APPLICATION_NAME",
     "Name of application (a short useful",
@@ -57,16 +56,6 @@ OptionParser.new do |opts|
     "(e.g: example-001.vm.brightbox.net)\n"
   ) { |value| @server = value }
 
-  opts.on_tail("-h", "--help", "Displays this help page") do
-    puts opts
-    exit 0
-  end
-  
-  opts.on_tail("-v", "--version", "Displays the version number") do
-    puts "#{@progname}: version #{Brightbox::VERSION}"
-    exit 0
-  end
- 
   begin
     opts.parse!(ARGV)
     raise OptionParser::ParseError,
@@ -79,7 +68,7 @@ OptionParser.new do |opts|
 end
 
 
-abort "Please specify the directory containing the Rails app, e.g. '#{@progname} .'" if ARGV.empty?
+abort "Please specify the directory containing the Rails app, e.g. '#{opts.program_name} .'" if ARGV.empty?
 abort "Too many arguments; please provide a single directory name." unless ARGV.length == 1
 abort "'#{ARGV.first}' does not exist." unless File.exists?(ARGV.first)
 abort "'#{ARGV.first}' is not a directory." unless File.directory?(ARGV.first)
@@ -94,14 +83,14 @@ end
 
 files = {
   "Capfile" => unindent(<<-FILE),
-    # Generated with '#{@progname}' on #{Time.now}
+    # Generated with '#{opts.program_name}' on #{Time.now}
     load 'deploy' if respond_to?(:namespace) # cap2 differentiator
     Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
     load 'config/deploy'
   FILE
 
   "lib/tasks/bbgem.rake" => unindent(<<-FILE),
-    # Generated with '#{@progname}' on #{Time.now}
+    # Generated with '#{opts.program_name}' on #{Time.now}
 unless Rake::Task.task_defined?("gems:install") 
   def install_gems
     gems={
@@ -187,7 +176,7 @@ end
   FILE
 
 "config/deploy.rb" => unindent(<<-FILE),
-    ## Generated with '#{@progname}' on #{Time.now}
+    ## Generated with '#{opts.program_name}' on #{Time.now}
     gem 'brightbox', '>=#{Brightbox::VERSION}'
     require 'brightbox/recipes'
 
