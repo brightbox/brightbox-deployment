@@ -22,6 +22,7 @@
 require 'rubygems'
 require 'optparse'
 require 'fileutils'
+require 'brightbox/version'
 require 'erb'
 
 @mongrelhost = "127.0.0.1"
@@ -29,15 +30,13 @@ require 'erb'
 @port = 9200
 @railsenv = "production"
 @pidfile = "log/mongrel.pid"
-@appname = File.basename($0)
 
 def has_required_options?
   [@application, @config, @railsroot].all?
 end
 
 OptionParser.new do |opts|
-  opts.banner = "brightbox-mongrel creates a Mongrel config for a Rails app\n"
-  opts.banner << "Usage: #{@appname} [options] [args]"
+  opts.banner = "#{opts.program_name} creates a Mongrel config for a Rails app\n#{opts.banner}"
 
   opts.on("-n", "--name APPLICATION_NAME",
     "Name of application (a short useful name",
