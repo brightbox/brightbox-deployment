@@ -35,14 +35,11 @@ after "deploy:cold",
 after "deploy:finalize_update",
   "deploy:shared:global:symlink",
   "deploy:shared:local:symlink",
-  "gems:install"
+  "deploy:rake_tasks"
 
 after "deploy:update",
   "deploy:cleanup"
 
-before "deploy:migrate",
-  "db:check:config",
-  "db:create"
 
 after "deploy:start",
   "deploy:web:reload_if_new"

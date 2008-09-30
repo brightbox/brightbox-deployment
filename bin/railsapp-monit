@@ -40,7 +40,7 @@ def has_required_options?
   [@application, @config, @port, @railsroot].all?
 end
 
-opts = OptionParser.new do |opts|
+@opts = OptionParser.new do |opts|
   opts.banner = "#{opts.program_name} creates a Monit config for a Rails app\n#{opts.banner}"
 
   opts.on("-n", "--name APPLICATION_NAME",
@@ -123,7 +123,7 @@ process_pid_file
 end
 
 def config_time_stamp
-  "# Created by #{opts.program_name} at #{Time.now}\n"
+  "# Created by #{@opts.program_name} at #{Time.now}\n"
 end
 
 def mongrel_config(port, pidfile)
@@ -150,7 +150,7 @@ def monit_config
   config_time_stamp +
   @mongrel_instances.collect do |port, pidfile|
     mongrel_config(port,pidfile)
-  end.join('\n')
+  end.join("\n")
 end
 
 filename = "/etc/monit/conf.d/rails-#{@application}.monitrc"

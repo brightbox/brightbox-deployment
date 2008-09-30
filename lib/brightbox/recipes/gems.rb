@@ -40,11 +40,10 @@ namespace :gems do
   desc %Q{
   [internal]Run the gems install task in the application.
   }
-  task :install do
+  task :install, :except => {:no_release => true} do
     if gem_dependencies?
       install_gems
     else
-      run rake_task("gems")
       sudo rake_task("gems:install")
     end
   end

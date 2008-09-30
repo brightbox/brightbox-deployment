@@ -31,7 +31,7 @@ def has_required_options?
   [@application, @logdir].all?
 end
 
-opts = OptionParser.new do |opts|
+@opts = OptionParser.new do |opts|
   opts.banner = "#{opts.program_name} creates a logrotate config for a Rails app\n#{opts.banner}"
 
   opts.on("-nAPPLICATION_NAME", "--name APPLICATION_NAME",
@@ -61,7 +61,7 @@ end
 
 def logrotate_config
   %Q{
-# Created by #{opts.program_name} at #{Time.now}
+# Created by #{@opts.program_name} at #{Time.now}
 #{@logdir}/*.log {
   compress
   size #{@size}

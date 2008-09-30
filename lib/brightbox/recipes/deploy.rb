@@ -130,4 +130,30 @@ namespace :deploy do
     cold
   end
 
+  namespace :rake_tasks do
+
+    desc %Q{
+      Execute Rake tasks that need to be run once per system
+    }
+    task :singleton, :roles => :db, :only => {:primary => true} do
+      run rake_task("db:check:config")
+      run rake_task("db:create")
+    end
+
+    desc %Q{
+      Execute Rake tasks that need to be run on all deployments
+    }
+    task :global, :except => {:no_release => true} do
+      gems.install
+    end
+
+    desc %Q{
+      Execute Rake tasks
+    }
+    task :default do
+      singleton
+      global
+    end
+  end
+
 end
