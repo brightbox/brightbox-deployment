@@ -21,6 +21,7 @@
 require 'rubygems'
 require 'optparse'
 require 'fileutils'
+require 'brightbox/version'
 
 @mongrelhost = "127.0.0.1"
 @mongrels = 2
@@ -29,7 +30,6 @@ require 'fileutils'
 @certificate = nil
 @key_file = nil
 @maxage = 315360000
-@app_name = File.basename $0
 
 def has_required_options?
   [@application, @webroot, @domain].all? &&
@@ -42,11 +42,11 @@ def certificate_file
   test_path = File.join('','etc','ssl','certs', cert_base + '.*')
   candidates = Dir[test_path]
   if candidates.empty?
-    abort "#{@app_name}: Unable to find certificate file for #{@cert_base}"
+    abort "#{opts.program_name}: Unable to find certificate file for #{@cert_base}"
   end
   result = candidates.pop
   unless candidates.empty?
-    abort "#{@app_name}: #{@cert_base} resolves to more than one file. Please be more specific"
+    abort "#{opts.program_name}: #{@cert_base} resolves to more than one file. Please be more specific"
   end
   result
 end
@@ -63,14 +63,13 @@ def key_file
   return nil if candidates.empty?
   result = candidates.pop
   unless candidates.empty?
-    abort "#{@app_name}: #{key_base} resolves to more than one file. Please be more specific"
+    abort "#{opts.program_name}: #{key_base} resolves to more than one file. Please be more specific"
   end
   result
 end
 
-OptionParser.new do |opts|
-  opts.banner = "#{@app_name} creates an #{WEBSERVER} config for a Rails app\n"
-  opts.banner << "Usage: #{@app_name} [options] [args]"
+opts = OptionParser.new do |opts|
+  opts.banner = "#{opts.program_name} creates an #{WEBSERVER} config for a Rails app\n#{opts.banner}"
 
   opts.on("-n APPLICATION_NAME", "--name APPLICATION_NAME",
     "Name of application (a short useful",
@@ -160,7 +159,7 @@ def configure_site(site_name)
 end
 
 def config_time_stamp
-  "# Created by #{@app_name} at #{Time.now}"
+  "# Created by #{opts.program_name} at #{Time.now}"
 end
 
 def local_app_alias
