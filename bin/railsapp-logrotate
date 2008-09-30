@@ -21,56 +21,58 @@
 
 require 'rubygems'
 require 'optparse'
-require 'erb'
 require 'fileutils'
+require 'brightbox/version'
 
 @size = '100M'
 @keep = '10'
 
-OptionParser.new do |opts|
-  opts.banner = "brightbox-logrotate creates a logrotate config for a Rails app\n"
-  opts.banner << "Usage: #{$0} [options] [args]"
+def has_required_options?
+  [@application, @logdir].all?
+end
+
+opts = OptionParser.new do |opts|
+  opts.banner = "#{opts.program_name} creates a logrotate config for a Rails app\n#{opts.banner}"
 
   opts.on("-nAPPLICATION_NAME", "--name APPLICATION_NAME",
-    "Name of application (a short useful name for the app such as 'myforum')"
+    "Name of application (a short useful name","for the app such as 'myforum')"
   ) { |value| @application = value }
   opts.on("-lLOG_DIR", "--logdir LOG_DIR",
-    "Full path to the directory containing the rails logs (e.g: /home/rails/myforum/current/log)"
+    "Full path to the directory containing the","rails logs","(e.g: /home/rails/myforum/current/log)"
   ) { |value| @logdir = value }
   opts.on("-sMAX_LOG_SIZE", "--size MAX_LOG_SIZE",
-    "When the current log file reaches this size, rotate it (e.g: 100M, 1G). Default: #{@size}"
+    "When the current log file reaches this","size, rotate it (e.g: 100M, 1G).","Default: #{@size}"
   ) { |value| @size = value }
   opts.on("-kPERIOD_TO_KEEP", "--keep PERIOD_TO_KEEP",
-    "Number of previous compressed logs to keep (default: #{@keep})"
+    "Number of previous compressed logs to keep","(default: #{@keep})"
   ) { |value| @keep = value }
  
-  if ARGV.empty?
+  begin
+    opts.parse!(ARGV)
+    raise OptionParser::ParseError,
+      "You must supply the required arguments" unless has_required_options?
+  rescue OptionParser::ParseError => e
+    warn e.message
     puts opts
     exit 1
-  else
-    opts.parse!(ARGV)
-    if @logdir.nil? or @application.nil?
-      puts "required option missing"
-      exit 1
-    end
   end
 end
 
 
-TEMPLATE = <<EOT
-# Created by brightbox-logrotate at <%= Time.now %>
-<%= @logdir %>/*.log {
+def logrotate_config
+  %Q{
+# Created by #{opts.program_name} at #{Time.now}
+#{@logdir}/*.log {
   compress
-  size <%= @size %>
-  rotate <%= @keep %>
+  size #{@size}
+  rotate #{@keep}
   missingok
   compress
   copytruncate
 }
-EOT
+}
+end
 
-template = ERB.new(TEMPLATE)
-config = template.result
 filename = "/etc/logrotate.d/rails-#{@application}"
 
-File.open(filename, "w") { |f| f.write config }
+File.open(filename, "w") { |f| f.write logrotate_config }
