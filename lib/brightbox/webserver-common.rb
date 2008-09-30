@@ -116,7 +116,7 @@ opts = OptionParser.new do |opts|
          ) { |value| @certificate_key = value }
 
   opts.on("-m", "--max-age MAX_AGE",
-          "Number of seconds to keep static assets in cache",
+          "Number of seconds to keep static assets","in cache",
           "(default: #{@maxage})"
          ) { |value| @maxage = value }
  
