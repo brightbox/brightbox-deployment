@@ -27,10 +27,8 @@ def ssl_certificate_key
   end
 end
 
-def http_config
+def standard_server_contents 
   %Q{
-#{config_time_stamp}
-<VirtualHost *:80>
   ServerName #{@domain}
   ServerAlias #{local_app_alias} #{@aliases}
   DocumentRoot #{@webroot}
@@ -62,6 +60,15 @@ def http_config
   <Location />
     Allow from all
   </Location>
+}
+end
+
+
+def http_config
+  %Q{
+#{config_time_stamp}
+<VirtualHost *:80>
+  #{standard_server_contents}
 </VirtualHost>
   }
 end
@@ -74,32 +81,7 @@ def https_config
   SSLCertificateFile #{@certificate_file}
   #{ssl_certificate_key}
   RequestHeader set X_FORWARDED_PROTO "https"
-  ServerName #{@domain}
-  ServerAlias #{local_app_alias} #{@aliases}
-  DocumentRoot #{@webroot}
-
-  <Directory "#{@webroot}">
-    Options FollowSymLinks
-    AllowOverride None
-    Order allow,deny
-    Allow from all
-  </Directory>
-
-  # Configure mongrel_cluster
-  <Proxy balancer://mongrel_cluster>
- #{balancer_members}
-  </Proxy>
-
-  ErrorLog /var/log/web/#{@application}.err
-  CustomLog /var/log/web/#{@application}.log combined
-
-  # Rails specific rewrite rules
-  Include /etc/apache2/brightbox-common
-
-  # Add any access limit directives here
-  <Location />
-    Allow from all
-  </Location>
+  #{standard_server_contents}
 </VirtualHost>
   }
 end
