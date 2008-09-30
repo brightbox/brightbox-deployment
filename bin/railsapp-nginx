@@ -29,11 +29,11 @@ def standard_server_contents
   root #{@webroot};
   access_log /var/log/web/#{@application}.log main;
     
-EOT
-end
+  location /system {
+    add_header Cache-Control no-cache;
+  }
 
-def standard_location_contents
-<<-EOT
+  location / {
     ## General Rails error page stuff
     error_page 404              /404.html;
     error_page 422              /422.html;
@@ -75,7 +75,14 @@ def standard_location_contents
       proxy_pass http://#{@application}_mongrels;
       break;
     }
+  }
 EOT
+end
+
+def ssl_certificate_key
+  if @key_file
+    "  ssl_certificate_key #{key_file};"
+  end
 end
 
 def http_config
@@ -89,23 +96,9 @@ upstream #{@application}_mongrels {
 server {
   listen 80;
   #{standard_server_contents}
-  location /system {
-    add_header Cache-Control no-cache;
-  }
-
-  location / {
-    #{standard_location_contents}
-  }
 }
 EOT
 end
-
-def ssl_certificate_key
-  if @key_file
-    "  ssl_certificate_key #{key_file};"
-  end
-end
-
 
 def https_config
 <<-EOT
@@ -116,14 +109,6 @@ server {
   ssl_certificate #{@certificate_file};
   #{ssl_certificate_key}
   #{standard_server_contents}
-
-  location /system {
-    add_header Cache-Control no-cache;
-  }
-
-  location / {
-    #{standard_location_contents}
-  }
 }
 EOT
 end
