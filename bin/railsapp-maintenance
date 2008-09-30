@@ -26,15 +26,13 @@ rescue LoadError
 end
 
 require 'optparse'
+require 'brightbox/version'
 require 'brightbox/maintenance'
 
-@options = {}
-@progname = File.basename($0)
 
-
-OptionParser.new do |opts|
+opts = OptionParser.new do |opts|
   opts.banner = "Create the default maintenance site\n"
-  opts.banner << "Usage: #{@progname} <directory_name>\n\n"
+  opts.banner << "Usage: #{opts.program_name} <directory_name>\n\n"
 
   begin
     opts.parse!(ARGV)
