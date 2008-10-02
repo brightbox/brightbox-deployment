@@ -28,6 +28,42 @@ def standard_server_contents
   server_name #{@domain} #{local_app_alias} #{@aliases};
   root #{@webroot};
   access_log /var/log/web/#{@application}.log main;
+  client_body_temp_path /var/spool/nginx-client-body 1 2;
+  client_max_body_size 32m;
+  client_body_buffer_size 32k;
+
+  tcp_nopush     on;
+
+  gzip_http_version 1.0;
+  gzip_comp_level 2;
+  gzip_proxied any;
+  gzip_min_length  1100;
+  gzip_buffers 16 8k;
+  gzip_types text/plain text/html text/css application/x-javascript text/xml application/xml application/xml+rss text/javascript;
+  # Some version of IE 6 don't handle compression well on some mime-types, so just disable for them
+  gzip_disable "MSIE [1-6].(?!.*SV1)";
+  # Set a vary header so downstream proxies don't send cached gzipped content to IE6
+  gzip_vary on;
+
+  # Send along useful info to the mongrels
+  proxy_set_header  X-Real-IP  $remote_addr;
+  proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header  Host $host;
+  proxy_set_header  X_FORWARDED_PROTO $scheme;
+  proxy_redirect false;
+  proxy_max_temp_file_size 0;
+  proxy_buffering   on;
+  proxy_buffer_size       4k;
+  proxy_buffers     16  32k;
+
+  fastcgi_buffer_size 4k;
+  fastcgi_buffers 16 32k;
+
+  log_not_found  off;
+
+  log_format main '$remote_addr $host $remote_user [$time_local] '
+   '"$request" $status $body_bytes_sent "$http_referer" '
+   '"$http_user_agent" "$http_x_forwarded_for"' ;
     
   location /system {
     add_header Cache-Control no-cache;

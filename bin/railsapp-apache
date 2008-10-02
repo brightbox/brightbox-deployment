@@ -28,7 +28,7 @@ def ssl_certificate_key
 end
 
 def standard_server_contents 
-  %Q{
+  %Q@
   ServerName #{@domain}
   ServerAlias #{local_app_alias} #{@aliases}
   DocumentRoot #{@webroot}
@@ -54,27 +54,50 @@ def standard_server_contents
   CustomLog /var/log/web/#{@application}.log combined
 
   # Rails specific rewrite rules
-  Include /etc/apache2/brightbox-common
+  RewriteEngine On
+
+  # Check for maintenance file and redirect all requests
+  ErrorDocument 503 /system/maintenance.html
+  RewriteCond %{DOCUMENT_ROOT}/system/maintenance.html -f
+  RewriteCond %{SCRIPT_FILENAME} !^/system
+  RewriteRule ^.*$ /system/maintenance.html [R=503,L]
+
+  # Rewrite index to check for static
+  RewriteRule ^/$ /index.html [QSA]
+
+  # Rewrite to check for Rails cached page
+  RewriteRule ^([^.]+)$ $1.html [QSA]
+
+  # Redirect all non-static requests to cluster
+  RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_FILENAME} !-f [OR]
+  RewriteCond %{REQUEST_METHOD} !^(GET|HEAD)
+  RewriteRule ^/(.*)$ balancer://mongrel_cluster%{REQUEST_URI} [P,QSA,L]
+
+  # Deflate
+  AddOutputFilterByType DEFLATE text/plain text/html text/css application/x-javascript text/xml application/xml application/xml+rss text/javascript
+  BrowserMatch ^Mozilla/4 gzip-only-text/html
+  BrowserMatch ^Mozilla/4\.0[678] no-gzip
+  BrowserMatch \\bMSIE !no-gzip !gzip-only-text/html
 
   # Add any access limit directives here
   <Location />
     Allow from all
   </Location>
-}
+@
 end
 
 
 def http_config
-  %Q{
+  %Q@
 #{config_time_stamp}
 <VirtualHost *:80>
   #{standard_server_contents}
 </VirtualHost>
-  }
+  @
 end
 
 def https_config
-  %Q{
+  %Q@
 #{config_time_stamp}
 <VirtualHost _default_:443>
   SSLEngine On
@@ -83,7 +106,7 @@ def https_config
   RequestHeader set X_FORWARDED_PROTO "https"
   #{standard_server_contents}
 </VirtualHost>
-  }
+  @
 end
 
 
