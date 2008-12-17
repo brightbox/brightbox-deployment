@@ -20,7 +20,7 @@
 # Override standard tasks that don't do what we want
 
 # By default we require mongrel. In future we can just switch the default to passenger
-require 'deploy/mongrel'
+Capistrano::Configuration.instance(true).load File.join(File.dirname(__FILE__), 'deploy', 'mongrel.rb')
 
 namespace :deploy do
 
