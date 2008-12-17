@@ -55,6 +55,10 @@ opts = OptionParser.new do |opts|
     "Brightbox virtual server",
     "(e.g: example-001.vm.brightbox.net)\n"
   ) { |value| @server = value }
+  
+  opts.on("-a TYPE", "--app TYPE", [:mongrel, :passenger],
+    "App server type, mongrel or passenger"
+    ) { |value| @app_server = value }
 
   begin
     opts.parse!(ARGV)
@@ -286,6 +290,30 @@ end
     # or be explicit
     # set :scm, :subversion
 
+    ## Deployment settings
+    # The brightbox gem deploys as the user 'rails' by default and
+    # into the 'production' environment. You can change these as required.
+    # set :user, "rails"
+    # set :rails_env, :production
+
+    ## Command running settings
+    # use_sudo is switched off by default so that commands are run
+    # directly as 'user' by the run command. If you switch on sudo
+    # make sure you set the :runner variable - which is the user the
+    # capistrano default tasks use to execute commands.
+    # NB. This just affects the default recipes unless you use the
+    # 'try_sudo' command to run your commands.
+    # set :use_sudo, false
+    # set :runner, user
+    
+    ## Dependencies
+    # Set the commands and gems that your application requires. e.g.
+    # depend :remote, :gem, "will_paginate", ">=2.2.2"
+    # depend :remote, :command, "brightbox"\n\n
+  FILE
+}
+
+mongrel_deploy = unindent(<<-FILE
     ## Mongrel settings
     # Addresses that Mongrel listens on. Defaults to :local
     # Use :remote if your mongrels are on a different host to the web
@@ -307,29 +335,19 @@ end
     # set :mongrel_max_memory, 110
     # Maximum cpu allowable per mongrel. Defaults to 80%
     # set :mongrel_max_cpu, 80
-    
-    ## Deployment settings
-    # The brightbox gem deploys as the user 'rails' by default and
-    # into the 'production' environment. You can change these as required.
-    # set :user, "rails"
-    # set :rails_env, :production
-
-    ## Command running settings
-    # use_sudo is switched off by default so that commands are run
-    # directly as 'user' by the run command. If you switch on sudo
-    # make sure you set the :runner variable - which is the user the
-    # capistrano default tasks use to execute commands.
-    # NB. This just affects the default recipes unless you use the
-    # 'try_sudo' command to run your commands.
-    # set :use_sudo, false
-    # set :runner, user
-    
-    ## Dependencies
-    # Set the commands and gems that your application requires. e.g.
-    # depend :remote, :gem, "will_paginate", ">=2.2.2"
-    # depend :remote, :command, "brightbox"
   FILE
-}
+)
+  
+passenger_deploy = unindent(<<-FILE
+  FILE
+)
+  
+case @app_server
+when :passenger
+  files["config/deploy.rb"] << passenger_deploy
+when :mongrel
+  files["config/deploy.rb"] << mongrel_deploy
+end
 
 base = ARGV.shift
 files.each do |file, content|
