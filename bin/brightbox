@@ -82,6 +82,17 @@ def unindent(string)
   string.strip.gsub(/^#{indentation}/, "")
 end
 
+def deploy_requires(app_server)
+  header = %Q{gem 'brightbox', '>=#{Brightbox::VERSION}'
+    require 'brightbox/recipes'
+    }
+  header << case app_server
+  when :passenger
+    %Q{require 'brightbox/passenger'}
+  end
+  return header
+end
+
 @domain ||= @server
 @application ||= @server.gsub(/(-\d{3})?\..*\Z/,'')
 
@@ -181,8 +192,7 @@ end
 
 "config/deploy.rb" => unindent(<<-FILE),
     ## Generated with '#{opts.program_name}' on #{Time.now}
-    gem 'brightbox', '>=#{Brightbox::VERSION}'
-    require 'brightbox/recipes'
+    #{deploy_requires(@app_server)}
 
     # The name of your application.  Used for deployment directory and filenames
     # and Apache configs. Should be unique on the Brightbox
