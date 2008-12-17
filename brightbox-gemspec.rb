@@ -20,7 +20,7 @@
 require File.join(File.dirname(__FILE__),"lib/brightbox/version")
 def add_common(spec)
   spec.version = Brightbox::VERSION
-  spec.authors = ["John Leach","Neil Wilson"]
+  spec.authors = ["John Leach","Neil Wilson","David Smalley"]
   spec.email = "support@brightbox.co.uk"
   spec.homepage = "http://wiki.brightbox.co.uk/docs:thebrightboxgem"
   spec.rubyforge_project = 'brightbox'
