@@ -98,6 +98,10 @@ end
       "(Will ignore any mongrel values passed)"
     ) { |value| @passenger = value }
     
+    opts.on("-e", "--railsenv ENV",
+      "Set RailsEnv for passenger (Apache only)"
+    ) { |value| @rails_env = value }
+    
   end
   
   opts.on("-p", "--port MONGREL_PORT", Integer,
