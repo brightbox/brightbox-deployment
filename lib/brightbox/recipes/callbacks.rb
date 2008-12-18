@@ -19,18 +19,15 @@
 #
 # Hook tasks into the standard deployment system
 
+# Some mongrel specific callbacks have been moved to configure/mongrel.rb
+
 after "deploy:setup",
   "deploy:shared:global:setup",
   "deploy:shared:local:setup",
   "configure:maintenance",
   "configure:logrotation",
-  "configure:monit",
-  "configure:mongrel",
   "configure:apache",
   "configure:nginx"
-
-after "deploy:cold",
-  "deploy:monit:reload"
 
 after "deploy:finalize_update",
   "deploy:shared:global:symlink",
@@ -39,7 +36,6 @@ after "deploy:finalize_update",
 
 after "deploy:update",
   "deploy:cleanup"
-
 
 after "deploy:start",
   "deploy:web:reload_if_new"
