@@ -18,3 +18,4 @@
 #    <http://www.gnu.org/licenses/>.
 #
 Capistrano::Configuration.instance(true).load File.join(File.dirname(__FILE__), "recipes", "deploy", "passenger.rb")
+Capistrano::Configuration.instance(true).load File.join(File.dirname(__FILE__), "recipes", "configure", "passenger.rb")
