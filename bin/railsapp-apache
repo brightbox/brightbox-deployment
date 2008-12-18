@@ -179,9 +179,12 @@ def balancer_members
 end
 
 #MAIN PROGRAM
-brightbox_passenger_install if @passenger
 @apache_http_modules = %w(proxy_balancer proxy_http rewrite headers deflate)
 @apache_https_modules = %w(ssl)
+if @passenger
+  brightbox_passenger_install
+  @apache_http_modules << "passenger"
+end
 
 #Create a normal HTTP config
 @config=http_config
