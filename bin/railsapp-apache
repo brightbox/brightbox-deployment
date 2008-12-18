@@ -44,12 +44,7 @@ def standard_server_contents
   <Directory "#{@webroot}/system">
     Header set Cache-Control "no-cache"
   </Directory>
-
-  # Configure mongrel_cluster
-  <Proxy balancer://mongrel_cluster>
- #{balancer_members}
-  </Proxy>
-
+  #{mongrel_balancer_configuration}
   ErrorLog /var/log/web/#{@application}.err
   CustomLog /var/log/web/#{@application}.log combined
 
@@ -64,15 +59,10 @@ def standard_server_contents
 
   # Rewrite index to check for static
   RewriteRule ^/$ /index.html [QSA]
-
+  
   # Rewrite to check for Rails cached page
   RewriteRule ^([^.]+)$ $1.html [QSA]
-
-  # Redirect all non-static requests to cluster
-  RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_FILENAME} !-f [OR]
-  RewriteCond %{REQUEST_METHOD} !^(GET|HEAD)
-  RewriteRule ^/(.*)$ balancer://mongrel_cluster%{REQUEST_URI} [P,QSA,L]
-
+  #{mongrel_rewrite_configuration}
   # Deflate
   AddOutputFilterByType DEFLATE text/plain text/html text/css application/x-javascript text/xml application/xml application/xml+rss text/javascript
   BrowserMatch ^Mozilla/4 gzip-only-text/html
@@ -86,6 +76,37 @@ def standard_server_contents
 @
 end
 
+def mongrel_balancer_configuration
+  unless @passenger
+    %Q@
+  
+  # Configure mongrel_cluster
+  <Proxy balancer://mongrel_cluster>
+    #{balancer_members}
+  </Proxy>
+   
+    @
+  end
+end
+
+def mongrel_rewrite_configuration
+  unless @passenger
+    %Q@
+    
+  # Redirect all non-static requests to cluster
+  RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_FILENAME} !-f [OR]
+  RewriteCond %{REQUEST_METHOD} !^(GET|HEAD)
+  RewriteRule ^/(.*)$ balancer://mongrel_cluster%{REQUEST_URI} [P,QSA,L]
+    
+    @
+  end
+end
+
+def mongrel_ssl_header
+  unless @passenger
+  %Q{RequestHeader set X_FORWARDED_PROTO "https"}
+  end
+end
 
 def http_config
   %Q@
@@ -103,12 +124,29 @@ def https_config
   SSLEngine On
   SSLCertificateFile #{@certificate_file}
   #{ssl_certificate_key}
-  RequestHeader set X_FORWARDED_PROTO "https"
+  #{mongrel_ssl_header}
   #{standard_server_contents}
 </VirtualHost>
   @
 end
 
+def apt_update
+  system %Q{sudo apt-get update}
+end
+
+def install_ree
+  system %Q{sudo apt-get install libruby1.8 --assume-yes}
+end
+
+def install_passenger
+  system %Q{sudo apt-get install libapache2-mod-passenger --assume-yes}
+end
+
+def brightbox_passenger_install
+  apt_update
+  install_ree
+  install_passenger
+end
 
 def activate_modules(modules)
   enmod="/usr/sbin/a2enmod"
@@ -135,6 +173,7 @@ def balancer_members
 end
 
 #MAIN PROGRAM
+brightbox_passenger_install if @passenger
 @apache_http_modules = %w(proxy_balancer proxy_http rewrite headers deflate)
 @apache_https_modules = %w(ssl)
 
