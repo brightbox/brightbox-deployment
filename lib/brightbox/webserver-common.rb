@@ -91,6 +91,15 @@ end
     "(e.g: www.example.org,www.example.net)"
   ) { |value| @aliases = value.to_s.split(',').join(' ')}
   
+  if WEBSERVER == "apache2"
+    
+    opts.on("-r", "--passenger",
+      "Use phusion passenger (Apache only)",
+      "(Will ignore any mongrel values passed)"
+    ) { |value| @passenger = value }
+    
+  end
+  
   opts.on("-p", "--port MONGREL_PORT", Integer,
     "Port of the first mongrel service",
     "(default: #{@port})"
