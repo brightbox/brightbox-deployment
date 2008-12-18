@@ -32,7 +32,7 @@ def standard_server_contents
   ServerName #{@domain}
   ServerAlias #{local_app_alias} #{@aliases}
   DocumentRoot #{@webroot}
-
+  #{rails_env_if_passenger}
   <Directory "#{@webroot}">
     Header set Cache-Control "max-age=#{@maxage}"
     Options FollowSymLinks
@@ -99,6 +99,12 @@ def mongrel_rewrite_configuration
   RewriteRule ^/(.*)$ balancer://mongrel_cluster%{REQUEST_URI} [P,QSA,L]
     
     @
+  end
+end
+
+def rails_env_if_passenger
+  if @passenger && @rails_env
+    %Q{RailsEnv #{@rails_env}}
   end
 end
 
