@@ -86,9 +86,9 @@ def deploy_requires(app_server)
   header = %Q{gem 'brightbox', '>=#{Brightbox::VERSION}'
     require 'brightbox/recipes'
     }
-  header << case app_server
+  case app_server
   when :passenger
-    %Q{require 'brightbox/passenger'}
+    header << %Q{require 'brightbox/passenger'}
   end
   return header
 end
