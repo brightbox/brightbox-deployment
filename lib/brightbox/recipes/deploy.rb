@@ -76,6 +76,7 @@ namespace :deploy do
   application
   }
   task :initial do
+    gems.check_server_tools
     setup
     cold
   end

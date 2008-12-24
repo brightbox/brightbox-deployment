@@ -19,6 +19,20 @@
 #
 
 namespace :gems do
+  
+  desc "[internal]Install the matching brightbox-server-tools gem for this client gem version"
+  task :check_server_tools, :except => {:no_release => true} do
+    puts "Checking for brightbox-server-tools at #{::Version}"
+    install_gem("brightbox-server-tools", ::Version)
+  end
+  
+  def install_gem(gem, version)
+    sudo %Q{sh -c "
+      gem spec #{gem} --version '#{version}' 2>/dev/null|egrep -q '^name:' ||
+        sudo gem install --no-ri --no-rdoc --version '#{version}' #{gem}"
+    }
+  end
+  
 
   def gem_dependencies?
     (fetch(:dependencies,{})[:remote]||{})[:gem]
@@ -30,10 +44,7 @@ namespace :gems do
       gem = gemspec[0]
       version = gemspec[1]
       puts "Checking for #{gem} at #{version}"
-      sudo %Q{sh -c "
-        gem spec #{gem} --version '#{version}' 2>/dev/null|egrep -q '^name:' ||
-          sudo gem install -y --no-ri --no-rdoc --version '#{version}' #{gem}"
-      }
+      install_gem(gem, version)
     end
   end
 
