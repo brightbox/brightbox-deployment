@@ -150,7 +150,7 @@ end
 
 def brightbox_passenger_install
   apt_update
-  # install_ree
+  install_ree
   install_passenger
 end
 
