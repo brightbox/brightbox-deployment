@@ -19,32 +19,32 @@
 #
 
 def monit_setup
-  "railsapp-monit"
+  "railsapp-monit _#{::Version}_"
 end
 depend :remote, :command, monit_setup
 
 def apache_setup
-  "railsapp-apache"
+  "railsapp-apache _#{::Version}_"
 end
 depend :remote, :command, apache_setup
 
 def nginx_setup
-  "railsapp-nginx"
+  "railsapp-nginx _#{::Version}_"
 end
 depend :remote, :command, nginx_setup
 
 def mongrel_setup
-  "railsapp-mongrel"
+  "railsapp-mongrel _#{::Version}_"
 end
 depend :remote, :command, mongrel_setup
 
 def logrotate_setup
-  "railsapp-logrotate"
+  "railsapp-logrotate _#{::Version}_"
 end
 depend :remote, :command, logrotate_setup
 
 def maintenance_setup
-  "railsapp-maintenance"
+  "railsapp-maintenance _#{::Version}_"
 end
 depend :remote, :command, maintenance_setup
 
