@@ -17,7 +17,7 @@
 #    Public License along with this program.  If not, see
 #    <http://www.gnu.org/licenses/>.
 #
-
+depend :remote, :gem, "rack"
 
 namespace :configure do
   
