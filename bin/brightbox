@@ -164,28 +164,39 @@ unless Rake::Task.task_defined?("db:check:config")
       pe "database name should start with '\#{config['username']}' if using cluster"
     end
   end
+  
+    require 'yaml'
 
-  namespace(:db) do
-    namespace(:check) do
-      desc "Check database.yml config"
-      task :config => :environment do
-        p "Checking database mysql configuration..."
-        if config=ActiveRecord::Base.configurations[RAILS_ENV]
-          case config['adapter']
-          when nil
-            pe "adapter entry missing."
-          when 'mysql'
-            brightbox_sanity_checks(config)
-          else
-            pe "using \#{config['adapter']} - halting checks"
-          end
+    def read_database_yml
+      db_yml = File.join(File.dirname(__FILE__), "..", "..", "config", "database.yml")
+      if File.exist?(db_yml)
+        return YAML.load(File.open(db_yml))
+      else
+        return {}
+      end
+    end
+
+    namespace(:db) do
+  namespace(:check) do
+    desc "Check database.yml config"
+    task :config do
+      p "Checking database mysql configuration..."
+      if config=read_database_yml[RAILS_ENV]
+        case config['adapter']
+        when nil
+          pe "adapter entry missing."
+        when 'mysql'
+          brightbox_sanity_checks(config)
         else
-          pe "section missing."
+          pe "using \#{config['adapter']} - halting checks"
         end
+      else
+        pe "section missing."
       end
     end
   end
-end
+    end
+  end
 
 
   FILE
