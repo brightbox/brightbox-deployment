@@ -87,7 +87,9 @@ namespace :deploy do
       Execute Rake tasks that need to be run once per system
     }
     task :singleton, :roles => :db, :only => {:primary => true} do
-      run rake_task("db:check:config")
+      unless disable_db_check
+        run rake_task("db:check:config")
+      end
       run rake_task("db:create")
     end
 

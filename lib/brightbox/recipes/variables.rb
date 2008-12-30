@@ -39,6 +39,7 @@ _cset :domain_aliases, nil
 _cset :max_age, nil
 _cset :user, "rails"
 _cset :runner, user
+_cset :disable_db_check, false
 _cset :use_sudo, false
 _cset :ssl_certificate, nil
 _cset :ssl_key, nil
