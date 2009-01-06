@@ -54,6 +54,7 @@ namespace :gems do
   task :install, :except => {:no_release => true} do
     if gem_dependencies?
       install_gems
+      sudo rake_task("gems:install")
     else
       sudo rake_task("gems:install")
     end
