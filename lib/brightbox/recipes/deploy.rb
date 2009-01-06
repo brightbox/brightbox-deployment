@@ -104,8 +104,8 @@ namespace :deploy do
       Execute Rake tasks
     }
     task :default do
-      singleton
       global
+      singleton
     end
   end
 
