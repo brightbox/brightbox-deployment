@@ -26,10 +26,30 @@ namespace :deploy do
     task event, :roles => :app, :except => {:no_release => true } do
     end
   end
-  
-  desc "Restart your application using passenger."
-  task :restart, :roles => :app, :except => {:no_release => true} do
-    try_sudo "touch #{current_path}/tmp/restart.txt"
-  end
+    
+    desc "Restart your application using passenger."
+    task :restart, :roles => :app, :except => {:no_release => true} do
+      case passenger_restart_strategy
+      when :hard
+        deploy.passenger.hard_restart
+      when :soft
+        deploy.passenger.soft_restart
+      end
+    end
+    
+    namespace :passenger do
+    
+      desc "Hard restart your passenger instances by killing the dispatcher"
+      task :hard_restart, :roles => :app, :except => {:no_release => true} do
+        soft_restart
+        sudo "kill \$( passenger-memory-stats | grep 'Passenger spawn server' | awk '{ print \$1 }' )"
+      end
+    
+      desc "Soft restart you passenger instances by issuing touch tmp/restart.txt"
+      task :soft_restart, :roles => :app, :except => {:no_release => true} do
+        run "touch #{current_path}/tmp/restart.txt"
+      end
+    
+    end
   
 end
