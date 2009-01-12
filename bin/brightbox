@@ -360,12 +360,6 @@ mongrel_deploy = unindent(<<-FILE
 )
   
 passenger_deploy = unindent(<<-FILE
-   ## Ruby Enterprise
-   # Use the experimental Brightbox Ruby Enterprise Package for Ubuntu
-   # Don't enable this option unless you're testing this out as it is
-   # currently not recommended for production use
-   # set :use_ree, true
-   
    ## Passenger Configuration
    # Set the method of restarting passenger
    # Defaults to :hard which is used to instantly free up database connections

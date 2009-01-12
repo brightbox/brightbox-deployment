@@ -150,9 +150,6 @@ end
 
 def brightbox_passenger_install
   apt_update
-  unless use_ree
-    install_ree # For now - don't install Ruby Enterprise Edition unless told to
-  end
   install_passenger
 end
 
