@@ -42,7 +42,8 @@ namespace :deploy do
       desc "Hard restart your passenger instances by killing the dispatcher"
       task :hard_restart, :roles => :app, :except => {:no_release => true} do
         soft_restart
-        sudo "kill \$( passenger-memory-stats | grep 'Passenger spawn server' | awk '{ print \$1 }' )"
+        run "if [ \`pgrep -f 'Rails: #{deploy_to}'\` ]; then pkill -f 'Rails: #{deploy_to}'; fi"
+        run "if [ \`pgrep -f 'Passenger ApplicationSpawner: #{deploy_to}'\` ]; then pkill -f 'Passenger ApplicationSpawner: #{deploy_to}'; fi"
       end
     
       desc "Soft restart you passenger instances by issuing touch tmp/restart.txt"
