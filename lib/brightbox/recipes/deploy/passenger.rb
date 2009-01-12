@@ -42,7 +42,7 @@ namespace :deploy do
       desc "Hard restart your passenger instances by killing the dispatcher"
       task :hard_restart, :roles => :app, :except => {:no_release => true} do
         soft_restart
-        sudo "kill \$( passenger-memory-stats | grep 'Passenger spawn server' | awk '{ print \$1 }' )"
+        sudo "pkill -f \"Passenger spawn server\""
       end
     
       desc "Soft restart you passenger instances by issuing touch tmp/restart.txt"
