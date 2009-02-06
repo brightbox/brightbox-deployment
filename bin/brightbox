@@ -232,6 +232,9 @@ unless Rake::Task.task_defined?("db:check:config")
     # Set the commands and gems that your application requires. e.g.
     # depend :remote, :gem, "will_paginate", ">=2.2.2"
     # depend :remote, :command, "brightbox"
+    # 
+    # Gem with a source (such as github)
+    # depend :remote, :gem, "tmm1-amqp", ">=0.6.0", "http://gems.github.com"
 
     ## Local Shared Area
     # These are the list of files and directories that you want
