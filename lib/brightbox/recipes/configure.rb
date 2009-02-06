@@ -18,35 +18,41 @@
 #    <http://www.gnu.org/licenses/>.
 #
 
+MONIT_COMMAND = "railsapp-monit"
 def monit_setup
-  "railsapp-monit _#{::Version}_"
+  "#{MONIT_COMMAND} _#{::Version}_"
 end
-depend :remote, :command, monit_setup
+depend :remote, :command, MONIT_COMMAND
 
+APACHE_COMMAND = "railsapp-apache"
 def apache_setup
-  "railsapp-apache _#{::Version}_"
+  "#{APACHE_COMMAND} _#{::Version}_"
 end
-depend :remote, :command, apache_setup
+depend :remote, :command, APACHE_COMMAND
 
+NGINX_COMMAND = "railsapp-nginx"
 def nginx_setup
-  "railsapp-nginx _#{::Version}_"
+  "#{NGINX_COMMAND} _#{::Version}_"
 end
-depend :remote, :command, nginx_setup
+depend :remote, :command, NGINX_COMMAND
 
+MONGREL_COMMAND = "railsapp-mongrel"
 def mongrel_setup
-  "railsapp-mongrel _#{::Version}_"
+  "#{MONGREL_COMMAND} _#{::Version}_"
 end
-depend :remote, :command, mongrel_setup
+depend :remote, :command, MONGREL_COMMAND
 
+LOGROTATE_COMMAND = "railsapp-logrotate"
 def logrotate_setup
-  "railsapp-logrotate _#{::Version}_"
+  "#{LOGROTATE_COMMAND} _#{::Version}_"
 end
-depend :remote, :command, logrotate_setup
+depend :remote, :command, LOGROTATE_COMMAND
 
+MAINTENANCE_COMMAND = "railsapp-maintenance"
 def maintenance_setup
-  "railsapp-maintenance _#{::Version}_"
+  "#{MAINTENANCE_COMMAND} _#{::Version}_"
 end
-depend :remote, :command, maintenance_setup
+depend :remote, :command, MAINTENANCE_COMMAND
 
 Capistrano::Configuration.instance(true).load File.join(File.dirname(__FILE__), 'configure', 'mongrel.rb')
 
