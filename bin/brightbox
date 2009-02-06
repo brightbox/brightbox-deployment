@@ -227,6 +227,11 @@ unless Rake::Task.task_defined?("db:check:config")
     ### Other options you can set ##
     # Comma separated list of additional domains for Apache
     # set :domain_aliases, "www.example.com,dev.example.com"
+    
+    ## Dependencies
+    # Set the commands and gems that your application requires. e.g.
+    # depend :remote, :gem, "will_paginate", ">=2.2.2"
+    # depend :remote, :command, "brightbox"
 
     ## Local Shared Area
     # These are the list of files and directories that you want
@@ -325,12 +330,7 @@ unless Rake::Task.task_defined?("db:check:config")
     # NB. This just affects the default recipes unless you use the
     # 'try_sudo' command to run your commands.
     # set :use_sudo, false
-    # set :runner, user
-    
-    ## Dependencies
-    # Set the commands and gems that your application requires. e.g.
-    # depend :remote, :gem, "will_paginate", ">=2.2.2"
-    # depend :remote, :command, "brightbox"\n\n
+    # set :runner, user\n\n
   FILE
 }
 
