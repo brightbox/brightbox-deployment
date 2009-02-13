@@ -235,6 +235,9 @@ unless Rake::Task.task_defined?("db:check:config")
     # 
     # Gem with a source (such as github)
     # depend :remote, :gem, "tmm1-amqp", ">=0.6.0", "http://gems.github.com"
+    # 
+    # Specify your specific Rails version if it is not vendored
+    # depend :remote, :gem, "rails", "=2.2.2"
 
     ## Local Shared Area
     # These are the list of files and directories that you want
