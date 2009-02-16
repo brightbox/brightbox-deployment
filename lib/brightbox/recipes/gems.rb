@@ -36,7 +36,7 @@ namespace :gems do
   
 
   def gem_dependencies?
-    (fetch(:dependencies,{})[:remote]||{})[:gem]
+    (fetch(:dependencies,{})[:remote]||{})[:gem] || []
   end
 
   def install_gems
