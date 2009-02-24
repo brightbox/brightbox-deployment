@@ -26,8 +26,8 @@ namespace :gems do
     install_gem("brightbox-server-tools", ::Version)
   end
   
-  def install_gem(gem, version, source = nil)
-    source_arg = source.nil? ? "" : "--source #{source}"
+  def install_gem(gem, version, options = nil)
+    source_arg = options && options[:source] ? "--source #{options[:source]}" : ""
     sudo %Q{sh -c "
       gem spec #{gem} --version '#{version}' 2>/dev/null|egrep -q '^name:' ||
         sudo gem install --no-ri --no-rdoc --version '#{version}' #{source_arg} #{gem}"
