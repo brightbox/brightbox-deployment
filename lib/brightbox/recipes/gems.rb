@@ -28,9 +28,9 @@ namespace :gems do
   
   def install_gem(gem, version, options = nil)
     source_arg = options && options[:source] ? "--source #{options[:source]}" : ""
-    sudo %Q{sh -c "
+    run %Q{sh -c "
       gem spec #{gem} --version '#{version}' 2>/dev/null|egrep -q '^name:' ||
-        sudo gem install --no-ri --no-rdoc --version '#{version}' #{source_arg} #{gem}"
+        sudo -p '#{sudo_prompt}' gem install --no-ri --no-rdoc --version '#{version}' #{source_arg} #{gem}"
     }
   end
   
