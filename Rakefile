@@ -8,7 +8,12 @@ namespace :client do
 
   desc "Reinstall the client gem locally"
   task :reinstall => [:repackage] do
-    sh %Q{sudo gem uninstall -x -v #{@client.version} #{@client.name} }
+    begin
+      sh %Q{sudo gem uninstall -x -v #{@client.version} #{@client.name} }
+    rescue RuntimeError => e
+      puts "Gem not installed, continuing."
+    end
+    
     sh %q{sudo gem install pkg/*.gem}
   end
 
