@@ -40,9 +40,9 @@ namespace :configure do
         -w #{File.join(current_path, 'public')}
         --passenger
         --railsenv #{rails_env}
-        #{'-m '+max_age if max_age}
-        #{'-c '+ssl_certificate if ssl_certificate} 
-        #{'-k '+ssl_key if ssl_key}
+        #{"-m #{max_age}" if max_age}
+        #{"-c #{ssl_certificate}" if ssl_certificate} 
+        #{"-k #{ssl_key}" if ssl_key}
     END
         )
   end
