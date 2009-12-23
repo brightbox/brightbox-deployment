@@ -14,7 +14,7 @@ namespace :client do
       puts "Gem not installed, continuing."
     end
     
-    sh %q{sudo gem install pkg/*.gem}
+    sh %Q{sudo gem install pkg/#{@client.name}-#{@client.version}.gem}
   end
 
 end
