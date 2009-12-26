@@ -94,6 +94,7 @@ namespace :deploy do
       Execute Rake tasks that need to be run on all deployments
     }
     task :global, :except => {:no_release => true} do
+      packages.install
       gems.install
     end
 
