@@ -30,4 +30,17 @@ def on_one_line(cmd_list)
   cmd_list.gsub!(/\n/m, ' ')
 end
 
-
+# Override cap's depend method so we can intercept any calls we want to
+# ourselves and act upon them.
+alias :cap_depend :depend
+# Our depend method
+def depend location, type, *args
+  # So far we only care about :remote, :apt. Intercept only that
+  if location == :remote && [:apt].include?(type)
+    # "Translate" this into a :match call cap can handle for us.
+    cap_depend(:remote, :match, "dpkg-query --show -f '${Status}' -- #{args.first}", /^install ok installed$/)
+  else
+    # we don't want to interfere with this, send it on it's merry way
+    cap_depend(location, type, *args) 
+  end
+end
