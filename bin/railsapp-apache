@@ -23,7 +23,7 @@ require "brightbox/webserver-common"
 
 def ssl_certificate_key
   if @key_file
-    "  SSLCertificateKeyFile #{key_file}"
+    "SSLCertificateKeyFile #{key_file}"
   end
 end
 

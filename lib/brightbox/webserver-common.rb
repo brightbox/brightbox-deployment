@@ -42,11 +42,11 @@ def certificate_file
   test_path = File.join('','etc','ssl','certs', cert_base + '.*')
   candidates = Dir[test_path]
   if candidates.empty?
-    abort "#{@opts.program_name}: Unable to find certificate file for #{@cert_base}"
+    abort "#{@opts.program_name}: Unable to find certificate file for #{cert_base}"
   end
   result = candidates.pop
   unless candidates.empty?
-    abort "#{@opts.program_name}: #{@cert_base} resolves to more than one file. Please be more specific"
+    abort "#{@opts.program_name}: #{cert_base} resolves to more than one file. Please be more specific"
   end
   result
 end
