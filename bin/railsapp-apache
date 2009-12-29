@@ -27,6 +27,12 @@ def ssl_certificate_key
   end
 end
 
+def ssl_intermediate_certificate
+  if @intermediate_cert
+    "SSLCertificateChainFile #{intermediate_cert_file}"
+  end
+end
+
 def standard_server_contents 
   %Q@
   ServerName #{@domain}
@@ -131,6 +137,7 @@ def https_config
   SSLEngine On
   SSLCertificateFile #{@certificate_file}
   #{ssl_certificate_key}
+  #{ssl_intermediate_certificate}
   #{mongrel_ssl_header}
   #{standard_server_contents}
 </VirtualHost>

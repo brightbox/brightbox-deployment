@@ -43,6 +43,7 @@ namespace :configure do
         #{"-m #{max_age}" if max_age}
         #{"-c #{ssl_certificate}" if ssl_certificate} 
         #{"-k #{ssl_key}" if ssl_key}
+        #{"-i #{ssl_intermediate}" if ssl_intermediate}
     END
         )
   end
