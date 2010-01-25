@@ -22,6 +22,10 @@
 # By default we require mongrel. In future we can just switch the default to passenger
 Capistrano::Configuration.instance(true).load File.join(File.dirname(__FILE__), 'deploy', 'mongrel.rb')
 
+if File.exists?("config/deploy.local.rb")
+  Capistrano::Configuration.instance(true).load 'config/deploy.local.rb'
+end
+
 namespace :deploy do
 
   namespace :web do
