@@ -44,6 +44,7 @@ _cset :use_sudo, false
 _cset :ssl_certificate, nil
 _cset :ssl_intermediate, nil
 _cset :ssl_key, nil
+_cset :generate_webserver_config, true
 _cset :rails_env, "production"
 ssh_options[:forward_agent] = true
 
