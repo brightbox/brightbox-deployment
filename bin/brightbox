@@ -240,7 +240,7 @@ unless Rake::Task.task_defined?("db:check:config")
     # depend :remote, :gem, "rails", "=2.2.2"
     #
     # Set the apt packages your application or gems require. e.g.
-    # set :package_dependencies, %w(libxml2-dev libxslt1-dev libtidy-dev)
+    # depend :remote, :apt, "libxml2-dev"
 
     ## Local Shared Area
     # These are the list of files and directories that you want
