@@ -238,6 +238,9 @@ unless Rake::Task.task_defined?("db:check:config")
     # 
     # Specify your specific Rails version if it is not vendored
     # depend :remote, :gem, "rails", "=2.2.2"
+    #
+    # Set the apt packages your application or gems require. e.g.
+    # depend :remote, :apt, "libxml2-dev"
 
     ## Local Shared Area
     # These are the list of files and directories that you want

@@ -42,11 +42,11 @@ def certificate_file
   test_path = File.join('','etc','ssl','certs', cert_base + '.*')
   candidates = Dir[test_path]
   if candidates.empty?
-    abort "#{@opts.program_name}: Unable to find certificate file for #{@cert_base}"
+    abort "#{@opts.program_name}: Unable to find certificate file for #{cert_base}"
   end
   result = candidates.pop
   unless candidates.empty?
-    abort "#{@opts.program_name}: #{@cert_base} resolves to more than one file. Please be more specific"
+    abort "#{@opts.program_name}: #{cert_base} resolves to more than one file. Please be more specific"
   end
   result
 end
@@ -64,6 +64,21 @@ def key_file
   result = candidates.pop
   unless candidates.empty?
     abort "#{@opts.program_name}: #{key_base} resolves to more than one file. Please be more specific"
+  end
+  result
+end
+
+def intermediate_cert_file
+  return @intermediate_cert if File.file?(@intermediate_cert)
+  cert_base = File.basename(@intermediate_cert, File.extname(@intermediate_cert))
+  test_path = File.join('','etc','ssl','certs', cert_base + '.*')
+  candidates = Dir[test_path]
+  if candidates.empty?
+    abort "#{@opts.program_name}: Unable to find certificate file for #{cert_base}"
+  end
+  result = candidates.pop
+  unless candidates.empty?
+    abort "#{@opts.program_name}: #{cert_base} resolves to more than one file. Please be more specific"
   end
   result
 end
@@ -128,6 +143,11 @@ end
           "Name of private key to use CERTIFICATE"
          ) { |value| @certificate_key = value }
 
+  # Optional
+  opts.on("-i", "--ssl-cert-intermediate INTERMEDIATE_NAME",
+          "name of intermediate certificate"
+          ) { |value| @intermediate_cert = value }
+
   opts.on("-m", "--max-age MAX_AGE",
           "Number of seconds to keep static assets","in cache",
           "(default: #{@maxage})"
@@ -145,6 +165,8 @@ end
   if @certificate
     @certificate_file = certificate_file
     @key_file = key_file
+    # Intermediate is optional
+    @intermediate_cert = intermediate_cert_file if @intermediate_cert
   end
 end
 

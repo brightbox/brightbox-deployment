@@ -23,7 +23,13 @@ require "brightbox/webserver-common"
 
 def ssl_certificate_key
   if @key_file
-    "  SSLCertificateKeyFile #{key_file}"
+    "SSLCertificateKeyFile #{key_file}"
+  end
+end
+
+def ssl_intermediate_certificate
+  if @intermediate_cert
+    "SSLCertificateChainFile #{intermediate_cert_file}"
   end
 end
 
@@ -131,6 +137,7 @@ def https_config
   SSLEngine On
   SSLCertificateFile #{@certificate_file}
   #{ssl_certificate_key}
+  #{ssl_intermediate_certificate}
   #{mongrel_ssl_header}
   #{standard_server_contents}
 </VirtualHost>

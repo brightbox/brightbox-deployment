@@ -37,6 +37,9 @@ after "deploy:finalize_update",
 after "deploy:update",
   "deploy:cleanup"
 
+after "deploy:initial",
+  "deploy:web:reload_if_new"
+
 after "deploy:start",
   "deploy:web:reload_if_new"
 

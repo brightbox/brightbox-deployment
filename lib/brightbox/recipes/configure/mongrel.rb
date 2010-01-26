@@ -27,6 +27,17 @@ after "deploy:cold",
 
 namespace :configure do
 
+  # Runs the given block when generating webserver configuration is allowed.
+  # 
+  # Basically, runs the block unless "set :generate_webserver_config, false" is in deploy.rb
+  def run_when_generating_webserver_config_allowed
+    if generate_webserver_config
+      yield if block_given?
+    else
+      logger.trace "Skipped - Not generating webserver config"
+    end
+  end
+
 [:nginx, :apache].each do |webserver|
   desc %Q{
   [internal]Create #{webserver.to_s} config. Creates a load balancing virtual host \
@@ -43,28 +54,30 @@ namespace :configure do
 
   }
   task webserver, :roles => :web, :except => {:no_release => true} do
-    app_hosts = case mongrel_host
-                when :local
-                  "localhost"
-                when :remote
-                  roles[:app].servers.join(",")
-                else
-                  mongrel_host
-                end
-    sudo on_one_line( <<-END
-        #{send(webserver.to_s + "_setup")}
-        -n #{application}
-        -d #{domain}
-        #{'-a '+domain_aliases if domain_aliases}
-        -w #{File.join(current_path, 'public')}
-        -h #{app_hosts}
-        -p #{mongrel_port}
-        -s #{mongrel_servers}
-        #{'-m '+max_age if max_age}
-        #{'-c '+ssl_certificate if ssl_certificate} 
-        #{'-k '+ssl_key if ssl_key}
-    END
-        )
+    run_when_generating_webserver_config_allowed do
+      app_hosts = case mongrel_host
+                  when :local
+                    "localhost"
+                  when :remote
+                    roles[:app].servers.join(",")
+                  else
+                    mongrel_host
+                  end
+      sudo on_one_line( <<-END
+          #{send(webserver.to_s + "_setup")}
+          -n #{application}
+          -d #{domain}
+          #{'-a '+domain_aliases if domain_aliases}
+          -w #{File.join(current_path, 'public')}
+          -h #{app_hosts}
+          -p #{mongrel_port}
+          -s #{mongrel_servers}
+          #{"-m #{max_age}" if max_age}
+          #{"-c #{ssl_certificate}" if ssl_certificate}
+          #{"-k #{ssl_key}" if ssl_key}
+      END
+          )
+    end
   end
 end
 
