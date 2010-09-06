@@ -112,6 +112,7 @@ end
 def rails_env_if_passenger
   if @passenger && @rails_env
     %Q{RailsEnv #{@rails_env}}
+    %Q{RackEnv #{@rails_env}}
   end
 end
 
