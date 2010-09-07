@@ -158,8 +158,8 @@ unless Rake::Task.task_defined?("db:check:config")
     end
     db=config['database']
     host=config['host']
-    if host && host != 'sqlreadwrite.brightbox.net'
-      pe "using '\#{host}', not the 'sqlreadwrite.brightbox.net' cluster"
+    if host && host !~ /^.*(sqlreadwrite|mysql)\.brightbox.net$/
+      pe "'\#{host}' does not look like one of the Brightbox MySQL clusters"
     elsif db && db !~ /\\A\#{config['username']}/
       pe "database name should start with '\#{config['username']}' if using cluster"
     end
@@ -218,8 +218,10 @@ unless Rake::Task.task_defined?("db:check:config")
     # Target directory for the application on the web and app servers.
     set(:deploy_to) { File.join("", "home", user, application) }
 
-    # URL of your source repository. This is the default one that comes on 
-    # every Brightbox, you can use your own (we'll let you :)
+    # URL of your source repository. By default this will just upload
+    # the local directory.  You should probably change this if you use
+    # another repository, like git or subversion.
+
     set :repository, "."
     set :scm, :none
     set :deploy_via, :copy
