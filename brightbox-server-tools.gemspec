@@ -1,5 +1,5 @@
 #    Brightbox - Easy Ruby Web Application Deployment
-#    Copyright (C) 2008, Neil Wilson, Brightbox Systems
+#    Copyright (C) 2010, Neil Wilson, John Leach, Brightbox Systems
 #
 #    This file is part of the Brightbox deployment system
 #
@@ -18,29 +18,19 @@
 #    <http://www.gnu.org/licenses/>.
 #
 require File.join(File.dirname(__FILE__),"lib/brightbox/version")
-def add_common(spec)
-  spec.version = Brightbox::VERSION
-  spec.authors = ["John Leach","Neil Wilson","David Smalley", "Caius Durling"]
-  spec.email = "support@brightbox.co.uk"
-  spec.homepage = "http://wiki.brightbox.co.uk/docs:gemv2:start"
-  spec.rubyforge_project = 'brightbox'
-  spec.has_rdoc = false
-end
+require 'rake'
 
-@server = Gem::Specification.new do |s|
-  add_common(s)
+Gem::Specification.new do |s|
   s.name = "brightbox-server-tools"
+	s.version = Brightbox::VERSION
+	s.authors = ["John Leach","Neil Wilson","David Smalley", "Caius Durling"]
+	s.email = "support@brightbox.co.uk"
+	s.homepage = "http://wiki.brightbox.co.uk/docs:gemv2:start"
+  s.rubyforge_project = 'brightbox'
+  s.has_rdoc = false
   s.files = FileList["LICENSE", "Rakefile", "*.rb", "bin/railsapp-*","lib/**/*.{rb,gz}"].exclude(/recipe/).to_a
+  s.add_dependency("bundler", ">= 1.0")
   s.summary = "Brightbox Server configuration scripts"
   s.executables = FileList["bin/railsapp-*"].sub(/bin\//,'')
-end
-
-@client = Gem::Specification.new do |s|
-  add_common(s)
-  s.name = "brightbox"
-  s.files = FileList["LICENSE", "Rakefile", "*.rb", "lib/**/*.rb","bin/brightbox"].exclude("lib/brightbox/webserver-common.rb").to_a
-  s.add_dependency("capistrano", ">= 2.5")
-  s.summary = "Brightbox rails deployment scripts for Capistrano"
-  s.executable = 'brightbox'
 end
 
