@@ -40,7 +40,6 @@ def standard_server_contents
   DocumentRoot #{@webroot}
   #{rails_env_if_passenger}
   <Directory "#{@webroot}">
-    Header set Cache-Control "max-age=#{@maxage}"
     Options FollowSymLinks
     AllowOverride None
     Order allow,deny
@@ -56,6 +55,11 @@ def standard_server_contents
 
   # Rails specific rewrite rules
   RewriteEngine On
+
+  # Set cache-control header for static assets
+  RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_FILENAME} -f
+  RewriteRule "^.*$" "$0" [L,E=CACHE:True]
+  Header onsuccess set "Cache-Control" "max-age=#{@maxage}" env=CACHE
 
   # Check for maintenance file and redirect all requests
   ErrorDocument 503 /system/maintenance.html
