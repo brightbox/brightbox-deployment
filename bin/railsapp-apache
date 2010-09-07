@@ -150,15 +150,15 @@ def https_config
 end
 
 def apt_update
-  system %Q{sudo apt-get update}
+  system %Q{sudo apt-get update -qy 2>/dev/null}
 end
 
 def install_ree
-  system %Q{sudo apt-get install libruby1.8 --assume-yes}
+  system %Q{sudo apt-get install -q libruby1.8 --assume-yes}
 end
 
 def install_passenger
-  system %Q{sudo apt-get install libapache2-mod-passenger --assume-yes}
+  system %Q{sudo apt-get install -q libapache2-mod-passenger --assume-yes}
 end
 
 def brightbox_passenger_install
