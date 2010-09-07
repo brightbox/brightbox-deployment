@@ -28,7 +28,7 @@ Gem::Specification.new do |s|
 	s.homepage = "http://wiki.brightbox.co.uk/docs:gemv2:start"
   s.rubyforge_project = 'brightbox'
   s.has_rdoc = false
-  s.files = FileList["LICENSE", "Rakefile", "*.rb", "bin/railsapp-*","lib/**/*.{rb,gz}"].exclude(/recipe/).to_a
+  s.files = FileList["LICENSE", "*.rb", "bin/railsapp-*","lib/**/*.{rb,gz}"].exclude(/recipe/).to_a
   s.add_dependency("bundler", ">= 1.0")
   s.summary = "Brightbox Server configuration scripts"
   s.executables = FileList["bin/railsapp-*"].sub(/bin\//,'')

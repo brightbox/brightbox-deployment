@@ -28,7 +28,7 @@ Gem::Specification.new do |s|
   s.homepage = "http://wiki.brightbox.co.uk/docs:gemv2:start"
   s.rubyforge_project = 'brightbox'
   s.has_rdoc = false
-  s.files = FileList["LICENSE", "Rakefile", "*.rb", "lib/**/*.rb","bin/brightbox"].exclude("lib/brightbox/webserver-common.rb").to_a
+  s.files = FileList["LICENSE", "*.rb", "lib/**/*.rb","bin/brightbox"].exclude("lib/brightbox/webserver-common.rb").to_a
   s.add_dependency("capistrano", ">= 2.5")
   s.summary = "Brightbox rails deployment scripts for Capistrano"
   s.executable = 'brightbox'
