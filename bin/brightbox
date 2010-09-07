@@ -30,6 +30,8 @@ require 'brightbox/version'
 
 @options = {}
 
+@app_server = :passenger
+
 def has_required_options?
   [@server].all?
 end
@@ -57,7 +59,7 @@ opts = OptionParser.new do |opts|
   ) { |value| @server = value }
   
   opts.on("-a TYPE", "--app TYPE", [:mongrel, :passenger],
-    "App server type, mongrel or passenger"
+    "App server type, mongrel or passenger (default is passenger)"
     ) { |value| @app_server = value }
 
   begin
