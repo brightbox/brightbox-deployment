@@ -106,37 +106,7 @@ files = {
 
   "lib/tasks/bbgem.rake" => unindent(<<-FILE),
     # Generated with '#{opts.program_name}' on #{Time.now}
-unless Rake::Task.task_defined?("gems:install") 
-  def install_gems
-    gems={
-      "ferret" => "~> 0.11",
-      "will_paginate" => "> 0"
-    }
-    gems.each_pair do |gem, version|
-      puts "Checking for \#{gem} at \#{version}"
-      system("gem spec \#{gem} --version '\#{version}' 2>/dev/null|egrep -q '^name:' ||
-              sudo gem install -y --no-ri --no-rdoc --version '\#{version}' \#{gem}")
-    end
-  end
-
-  def gems_upgrade_notice
-    puts "This is a dummy task installed by the Brightbox command"
-    puts "If you need gems to make your application work"
-    puts "Uncomment the install command and alter the gems on the list"
-    puts "... or upgrade to Rails >= 2.1 and use the inbuilt facilities"
-  end
-
-  namespace(:gems) do
-    desc "Installs all required gems for this application."
-    task :install do
-      gems_upgrade_notice
-      #install_gems 
-    end
-  end
-end
-
 unless Rake::Task.task_defined?("db:create") 
-
   namespace(:db) do
     task :create do
       puts "This is a dummy task installed by the Brightbox command"
@@ -234,6 +204,10 @@ unless Rake::Task.task_defined?("db:check:config")
     # Set the commands and gems that your application requires. e.g.
     # depend :remote, :gem, "will_paginate", ">=2.2.2"
     # depend :remote, :command, "brightbox"
+    #
+    # If you're using Bundler, then you don't need to specify your
+    # gems here as well as there (and the bundler gem is installed for
+    # you automatically)
     # 
     # Gem with a source (such as github)
     # depend :remote, :gem, "tmm1-amqp", ">=0.6.0", :source => "http://gems.github.com"
