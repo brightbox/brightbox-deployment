@@ -18,7 +18,7 @@
 #    <http://www.gnu.org/licenses/>.
 #
 
-after "gems:install", "bundle:install"
+after "gems:install", "bundler:install"
 depend :remote, :gem, "bundler", ">=1.0.0"
 
 namespace :bundler do
