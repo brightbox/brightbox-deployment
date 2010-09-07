@@ -19,11 +19,14 @@
 #
 def rake_task(taskname)
   rake = fetch(:rake, "rake")
-  rails_env = fetch(:rails_env, "production")
   rake_env = fetch(:rake_env, "")
-  directory = current_release 
+  in_rails_root("#{rake} #{rake_env} #{taskname}")
+end
 
-  %Q{sh -c 'cd #{directory}; #{rake} RAILS_ENV=#{rails_env} #{rake_env} #{taskname}'}
+def in_rails_root(taskname)
+  rails_env = fetch(:rails_env, "production")
+  directory = current_release
+  %Q{sh -c 'cd #{directory}; RAILS_ENV=#{rails_env} #{taskname}'}
 end
 
 def on_one_line(cmd_list)
