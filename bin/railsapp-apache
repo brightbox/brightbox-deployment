@@ -75,9 +75,9 @@ def standard_server_contents
   BrowserMatch \\bMSIE !no-gzip !gzip-only-text/html
 
   # Add any access limit directives here
-  <Location />
-    Allow from all
-  </Location>
+  #<Location />
+  #  Allow from all
+  #</Location>
 @
 end
 
