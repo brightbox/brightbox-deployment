@@ -20,9 +20,7 @@
 
 namespace :db do
 
-  desc %Q{
-  [internal]Create the database if it doesn't exist
-  }
+  desc "[internal]Create the database if it doesn't exist"
   task :create, :roles => :db, :only => { :primary => true } do
     run rake_task("db:create")
   end
@@ -37,4 +35,11 @@ namespace :db do
     end
   end
 
+end
+
+namespace :deploy do
+  desc "Run the migrate rake task."
+  task :migrate, :roles => :db, :only => { :primary => true } do
+    run rake_task("db:migrate")
+  end
 end
