@@ -2,8 +2,10 @@ before "gems:install", "packages:install"
 
 namespace :packages do
 
+  _cset(:packages_install, true)
+
   def install_package name
-    run %Q{dpkg-query --show -f '${Status}' #{name} 2>/dev/null|egrep -q "^install ok installed$" || sudo -p '#{sudo_prompt}' apt-get install -qy #{name}}
+    run %Q{dpkg-query --show -f '${Status}' #{name} 2>/dev/null|egrep -q "^install ok installed$" || #{sudo} apt-get install -qy #{name}}
   end
 
   def package_dependencies?
@@ -14,21 +16,28 @@ namespace :packages do
 
   def install_packages
     deps = package_dependencies?
-    puts "Updating apt-get"
-    sudo "apt-get update -qy >/dev/null"
-    deps.each do |pkg|
-      name = pkg
-      puts "Checking for #{name}"
-      install_package(name)
+    if deps.empty?
+      logger.info "Skipping, no packages defined for installation"
+    else
+      logger.info "Updating package information with apt-get"
+      run "#{sudo} apt-get update -qy >/dev/null"
+      deps.each do |pkg|
+        name = pkg
+        logger.info "Checking for package #{name}"
+        install_package(name)
+      end
     end
   end
 
   desc %Q{
   [internal]Run the packages install task in the application.
   }
-  task :install, :except => {:no_release => true} do
-    puts "Checking required packages are installed"
-    install_packages
+  task :install, :except => {:no_release => true, :packages_install => false}, :on_no_matching_servers => :continue do
+    if fetch(:packages_install)
+      install_packages
+    else
+      logger.info "Skipping packages:install as :packages_install is set to false"
+    end
   end
 
 end
