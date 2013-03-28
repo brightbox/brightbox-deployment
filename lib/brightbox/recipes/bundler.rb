@@ -18,8 +18,8 @@
 #    <http://www.gnu.org/licenses/>.
 #
 
+
 after "gems:install", "bundler:install"
-depend :remote, :gem, "bundler", ">=1.0.0"
 
 namespace :bundler do
 
@@ -30,33 +30,40 @@ namespace :bundler do
   # Set :bundle_disable to true to prevent us from running bundler,
   # even if we detect a Gemfile
   _cset(:bundle_disable, false)
-  # Set :bundle_force to true to run bundler even if we can't see a
-  # Gemfile
+  # bundle_force is ignored now, bundle is used by default now
   _cset(:bundle_force, false)
   _cset(:bundle_symlink, true)
+  _cset(:bundle_cmd, "bundle")
+
+  _cset(:rake) do
+    if fetch(:bundle_disable)
+      "rake"
+    else
+      "#{fetch(:bundle_cmd)} exec rake"
+    end
+  end
+
+  depend :remote, :command, fetch(:bundle_cmd)
 
   desc "[internal]Install the bundler gem on the server"
   task :install_bundler, :except => {:no_release => true} do
-    puts "Checking for bundler gem"
-    gems.install_gem("bundler", ">= 1.0.0" )
+    gems.install_gem("bundler", ">= 1.3.0" )
   end
-  
+
   desc %Q{
   [internal]Install the gems specified by the Gemfile or Gemfile.lock using bundler
   }
-  task :install, :except => {:no_release => true} do    
-    install_cmd = "(bundle install --gemfile #{bundle_gemfile} "
+  task :install, :except => {:no_release => true} do
+    install_cmd = "(cd #{latest_release} && #{bundle_cmd} install --gemfile #{bundle_gemfile} "
+    install_cmd << "--quiet "
     install_cmd << "--path #{bundle_dir} #{bundle_flags} "
     install_cmd << "--without #{bundle_without} "
     install_cmd << "&& ln -sf #{bundle_dir} #{File.join(latest_release, "vendor")}" if fetch(:bundle_symlink)
     install_cmd << ")"
     if fetch(:bundle_disable)
-      puts "Skipping bundler install as :bundle_enable is set to false"
-    elsif fetch(:bundle_force)
-      puts "Forcing bundler install as :bundle_force is set to true"
-      run install_cmd
+      logger.info "Skipping bundler install as :bundle_enable is set to false"
     else
-      run "if [ -e #{bundle_gemfile} ] ; then #{install_cmd} ; else true ; fi"
+      run install_cmd
     end
   end
 
@@ -64,7 +71,7 @@ namespace :bundler do
   [internal]Determine whether the requirements for your application are installed and available to bundler
   }
   task :check, :except => {:no_release => true} do
-    run "bundle check --gemfile #{bundle_gemfile}"
+    run "cd #{latest_release} && #{bundle_cmd} check --gemfile #{bundle_gemfile}"
   end
 
 end

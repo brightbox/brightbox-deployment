@@ -20,28 +20,9 @@
 def rake_task(taskname)
   rake = fetch(:rake, "rake")
   rake_env = fetch(:rake_env, "")
-  in_rails_root("#{rake} #{rake_env} #{taskname}")
-end
-
-# Runs the command under bundle exec if there is a Gemfile, otherwise
-# runs it without
-def bundle_exec(command)
-  if bundle_disable
-    %Q{RAILS_ENV=#{rails_env} #{command}}
-  else
-%Q{
-if [ "#{bundle_force}" = "true" -o -f "#{bundle_gemfile}" ] ;
-then  RAILS_ENV=#{rails_env} bundle exec #{command} ;
-else RAILS_ENV=#{rails_env} #{command} ;
-fi
-}
-end
-end
-
-def in_rails_root(taskname)
-  rails_env = fetch(:rails_env, "production")
   directory = current_release
-  "cd #{directory} ; #{bundle_exec(taskname)}"
+  # FIXME
+  "cd #{directory} ; #{rake} RAILS_ENV=#{rails_env} #{rake_env} #{taskname}"
 end
 
 def on_one_line(cmd_list)
