@@ -114,9 +114,8 @@ unless Rake::Task.task_defined?("db:create")
   namespace(:db) do
     task :create do
       puts "This is a dummy task installed by the Brightbox command"
-      puts "Your Rails version is too old to support the db:create task"
-      puts "Either upgrade to Rails >=2.0 to use the inbuilt facilities"
-      puts "Or create the database by hand if you haven't already"
+      puts "Your app doesn't support doing it's own database creation so you'll"
+      puts "have to create the database by hand if you haven't already."
     end
   end
 end
@@ -361,10 +360,10 @@ mongrel_deploy = unindent(<<-FILE
 passenger_deploy = unindent(<<-FILE
    ## Passenger Configuration
    # Set the method of restarting passenger
-   # Defaults to :hard which is used to instantly free up database connections
-   # :soft uses the standard touch tmp/restart.txt which leaves database connections
-   # lingering until the workers time out
-   # set :passenger_restart_strategy, :hard
+   # :soft is the default and just touches tmp/restart.txt as normal.
+   # :hard forcibly kills running instances, rarely needed now but used
+   # to be necessary with older versions of passenger
+   # set :passenger_restart_strategy, :soft
   FILE
 )
   
