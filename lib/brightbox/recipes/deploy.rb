@@ -1,5 +1,5 @@
 #    Brightbox - Easy Ruby Web Application Deployment
-#    Copyright (C) 2008, Neil Wilson, Brightbox Systems
+#    Copyright (C) 2013, Neil Wilson, John Leach, Brightbox Systems
 #
 #    This file is part of the Brightbox deployment system
 #
@@ -17,10 +17,6 @@
 #    Public License along with this program.  If not, see
 #    <http://www.gnu.org/licenses/>.
 #
-# Override standard tasks that don't do what we want
-
-# By default we require mongrel. In future we can just switch the default to passenger
-Capistrano::Configuration.instance(true).load File.join(File.dirname(__FILE__), 'deploy', 'mongrel.rb')
 
 if File.exists?("config/deploy.local.rb")
   Capistrano::Configuration.instance(true).load 'config/deploy.local.rb'
@@ -33,7 +29,7 @@ namespace :deploy do
     desc %Q{
       Reload the webserver
     }
-    task :reload, :roles => :web, :except => {:no_release => true } do
+    task :reload, :roles => :web, :except => {:no_release => true }, :on_no_matching_servers => :continue do
       %w(apache2 nginx).each do |webserver|
         initscript = "/etc/init.d/#{webserver}"
         sudo %Q{
@@ -45,7 +41,7 @@ namespace :deploy do
     desc %Q{
     [internal]reload web server if first release
     }
-    task :reload_if_new, :roles => :web, :except => {:no_release => true} do
+    task :reload_if_new, :roles => :web, :except => {:no_release => true}, :on_no_matching_servers => :continue do
       reset! :releases
       reload if releases.length == 1
     end
@@ -58,7 +54,7 @@ namespace :deploy do
       Return a 503 Service Temporarily Unavailable error code and display \
       the 'system maintenance' page.
     }
-    task :disable, :roles => :web, :except => { :no_release => true } do
+    task :disable, :roles => :web, :except => { :no_release => true }, :on_no_matching_servers => :continue do
       on_rollback {
         run "rm #{maintenance_page}"
       }
@@ -69,7 +65,7 @@ namespace :deploy do
       Makes the application web-accessible again. Removes the link \
       to the maintenance area.
     }
-    task :enable, :roles => :web, :except => { :no_release => true } do
+    task :enable, :roles => :web, :except => { :no_release => true }, :on_no_matching_servers => :continue do
       run "rm #{maintenance_page}"
     end
 
@@ -90,7 +86,7 @@ namespace :deploy do
     desc %Q{
       Execute Rake tasks that need to be run once per system
     }
-    task :singleton, :roles => :db, :only => {:primary => true} do
+    task :singleton, :roles => :db, :only => {:primary => true}, :on_no_matching_servers => :continue do
       run rake_task("db:create")
     end
 

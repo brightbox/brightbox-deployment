@@ -18,8 +18,10 @@
 #    <http://www.gnu.org/licenses/>.
 #
 
+_cset :passenger_restart_strategy, :soft
+
 namespace :configure do
-  
+
   desc %Q{
   [internal]Create Apache config. Creates a load balancing virtual host \
   configuration based upon your specified settings
@@ -51,11 +53,6 @@ namespace :configure do
           )
     end
   end
-  
-  task :mongrel, :roles => :app, :except => {:no_release => true} do
-  end
-  
-  task :monit, :roles => :app, :except => {:no_release => true} do
-  end
-  
+
+
 end

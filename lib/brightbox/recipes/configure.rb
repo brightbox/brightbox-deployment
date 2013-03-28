@@ -19,17 +19,11 @@
 #
 
 # Commands
-_cset :monit_command, "railsapp-monit"
+
 _cset :apache_command, "railsapp-apache"
 _cset :nginx_command, "railsapp-nginx"
-_cset :mongrel_command, "railsapp-mongrel"
 _cset :logrotate_command, "railsapp-logrotate"
 _cset :maintenance_command, "railsapp-maintenance"
-
-def monit_setup
-  "#{fetch(:monit_command)} _#{::Version}_"
-end
-depend :remote, :command, fetch(:monit_command)
 
 def apache_setup
   "#{fetch(:apache_command)} _#{::Version}_"
@@ -41,11 +35,6 @@ def nginx_setup
 end
 depend :remote, :command, fetch(:nginx_command)
 
-def mongrel_setup
-  "#{fetch(:mongrel_command)} _#{::Version}_"
-end
-depend :remote, :command, fetch(:mongrel_command)
-
 def logrotate_setup
   "#{fetch(:logrotate_command)} _#{::Version}_"
 end
@@ -55,8 +44,6 @@ def maintenance_setup
   "#{fetch(:maintenance_command)} _#{::Version}_"
 end
 depend :remote, :command, fetch(:maintenance_command)
-
-Capistrano::Configuration.instance(true).load File.join(File.dirname(__FILE__), 'configure', 'mongrel.rb')
 
 namespace :configure do
 
@@ -83,7 +70,7 @@ namespace :configure do
   desc %Q{
   [internal]Create the default maintenance website on the appropriate web servers in the shared area.
   }
-  task :maintenance, :roles => :web, :except => {:no_release => true} do
+  task :maintenance, :roles => :web, :except => {:no_release => true}, :on_no_matching_servers => :continue do
     run "#{maintenance_setup} #{shared_path}/system"
   end
 

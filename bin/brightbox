@@ -91,6 +91,8 @@ def deploy_requires(app_server)
   case app_server
   when :passenger
     header << %Q{require 'brightbox/passenger'}
+  when :mongrel
+    header << %Q{require 'brightbox/mongrel'}
   end
   return header
 end

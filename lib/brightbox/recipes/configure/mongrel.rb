@@ -18,6 +18,36 @@
 #    <http://www.gnu.org/licenses/>.
 #
 
+_cset :monit_command, "railsapp-monit"
+_cset :mongrel_command, "railsapp-mongrel"
+def monit_setup
+  "#{fetch(:monit_command)} _#{::Version}_"
+end
+depend :remote, :command, fetch(:monit_command)
+
+def mongrel_setup
+  "#{fetch(:mongrel_command)} _#{::Version}_"
+end
+depend :remote, :command, fetch(:mongrel_command)
+
+# Default system dependencies
+depend :remote, :command, "mongrel_rails"
+
+_cset :mongrel_pid_file, "tmp/pids/mongrel.pid"  #Stores Process ID for Mongrels
+_cset :mongrel_host, :local
+_cset :mongrel_port, 9200
+_cset :mongrel_servers, 2
+_cset(:mongrel_config_file) {File.join(deploy_to, "#{application}_mongrel_config.yml")}
+case mongrel_host
+when :local, :remote
+  _cset :mongrel_check_url, "http://localhost"
+else
+  _cset :mongrel_check_url, "http://#{mongrel_host}"
+end
+_cset :mongrel_max_memory, 110
+_cset :mongrel_max_cpu, 80
+
+
 after "deploy:setup",
   "configure:monit",
   "configure:mongrel"
