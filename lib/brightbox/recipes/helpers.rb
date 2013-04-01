@@ -43,3 +43,14 @@ def depend location, type, *args
     cap_depend(location, type, *args) 
   end
 end
+
+# Runs the given block when generating webserver configuration is allowed.
+# 
+# Basically, runs the block unless "set :generate_webserver_config, false" is in deploy.rb
+def run_when_generating_webserver_config_allowed
+  if fetch(:generate_webserver_config, true)
+    yield if block_given?
+  else
+    logger.trace "Skipped - Not generating webserver config"
+  end
+end

@@ -57,17 +57,6 @@ after "deploy:cold",
 
 namespace :configure do
 
-  # Runs the given block when generating webserver configuration is allowed.
-  # 
-  # Basically, runs the block unless "set :generate_webserver_config, false" is in deploy.rb
-  def run_when_generating_webserver_config_allowed
-    if generate_webserver_config
-      yield if block_given?
-    else
-      logger.trace "Skipped - Not generating webserver config"
-    end
-  end
-
 [:nginx, :apache].each do |webserver|
   desc %Q{
   [internal]Create #{webserver.to_s} config. Creates a load balancing virtual host \
