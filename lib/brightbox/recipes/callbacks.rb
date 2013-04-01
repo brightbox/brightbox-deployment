@@ -25,9 +25,7 @@ after "deploy:setup",
   "deploy:shared:global:setup",
   "deploy:shared:local:setup",
   "configure:maintenance",
-  "configure:logrotation",
-  "configure:apache",
-  "configure:nginx"
+  "configure:logrotation"
 
 after "deploy:finalize_update",
   "deploy:shared:global:symlink",

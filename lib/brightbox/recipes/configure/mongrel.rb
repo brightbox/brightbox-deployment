@@ -51,6 +51,9 @@ _cset :mongrel_max_cpu, 80
 after "deploy:setup",
   "configure:monit",
   "configure:mongrel"
+  "configure:apache",
+  "configure:nginx"
+
 
 after "deploy:cold",
   "deploy:monit:reload"

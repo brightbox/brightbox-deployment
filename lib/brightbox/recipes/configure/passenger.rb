@@ -20,6 +20,8 @@
 
 _cset :passenger_restart_strategy, :soft
 
+after "deploy:setup", "configure:apache"
+
 namespace :configure do
 
   desc %Q{
