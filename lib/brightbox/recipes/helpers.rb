@@ -18,7 +18,7 @@
 #    <http://www.gnu.org/licenses/>.
 #
 def rake_task(taskname)
-  rake = fetch(:rake, "rake")
+  rake = fetch(:rake)
   rake_env = fetch(:rake_env, "")
   directory = current_release
   # FIXME

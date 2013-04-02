@@ -35,7 +35,7 @@ namespace :bundler do
   _cset(:bundle_symlink, true)
   _cset(:bundle_cmd, "bundle")
 
-  _cset(:rake) do
+  set(:rake) do
     if fetch(:bundle_disable)
       "rake"
     else
