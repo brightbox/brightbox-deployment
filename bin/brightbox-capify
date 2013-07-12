@@ -19,16 +19,6 @@
 #    <http://www.gnu.org/licenses/>.
 #
 
-# If we're called as 'brightbox' then print the deprecation notice
-if File.basename(__FILE__) == 'brightbox'
-  puts <<-EOF
-#############################################################################
-## Please note: The 'brightbox' command has been deprecatead and will be   ##
-## removed in a future release. You should use 'brightbox-capify' instead. ##
-#############################################################################
-  EOF
-end
-
 begin
   require 'rubygems'
 rescue LoadError

@@ -32,6 +32,7 @@ Gem::Specification.new do |s|
   s.add_dependency("capistrano", ">= 2.15.5")
 	s.add_dependency("bundler", ">= 1.3.4")
   s.summary = "Brightbox rails deployment scripts for Capistrano"
-  s.executables = ["brightbox-capify", "brightbox"]
+  s.executables = ["brightbox-capify"]
+  s.post_install_message = "*** Please note: The 'brightbox' command has been renamed to 'brightbox-capify' ***"
 end
 
