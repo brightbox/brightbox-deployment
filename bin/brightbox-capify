@@ -329,7 +329,7 @@ unless Rake::Task.task_defined?("db:check:config")
     # capistrano default tasks use to execute commands.
     # NOTE: This just affects the default recipes unless you use the
     # 'try_sudo' command to run your commands. The 'try_sudo' command
-    # has been deprecated in favour of 'run "#{sudo} <command>"' syntax.
+    # has been deprecated in favour of 'run "\#{sudo} <command>"' syntax.
     # set :use_sudo, false
     # set :runner, user\n\n
 
