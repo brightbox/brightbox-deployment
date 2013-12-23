@@ -23,7 +23,7 @@ require 'rake'
 Gem::Specification.new do |s|
   s.name = "brightbox-server-tools"
 	s.version = Brightbox::VERSION
-	s.authors = ["John Leach","Neil Wilson","David Smalley","Caius Durling"]
+	s.authors = ["John Leach","Neil Wilson","David Smalley","Caius Durling","Ben Arblaster"]
 	s.email = "support@brightbox.co.uk"
 	s.homepage = "http://wiki.brightbox.co.uk/docs:gemv2:start"
   s.rubyforge_project = 'brightbox'
