@@ -30,6 +30,7 @@ Gem::Specification.new do |s|
   s.has_rdoc = false
   s.files = FileList["LICENSE", "*.rb", "lib/**/*.rb","bin/brightbox-capify"].exclude("lib/brightbox/webserver-common.rb").to_a
   s.add_dependency("capistrano", "~> 2.15.5")
+  s.add_dependency("net-ssh", "2.7.0")
   s.add_dependency("bundler", ">= 1.3.4")
   s.summary = "Brightbox rails deployment scripts for Capistrano"
   s.executables = ["brightbox-capify"]
