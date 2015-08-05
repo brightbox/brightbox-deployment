@@ -58,6 +58,7 @@ namespace :bundler do
     install_cmd << "--quiet "
     install_cmd << "--path #{bundle_dir} #{bundle_flags} "
     install_cmd << "--without #{bundle_without} "
+    install_cmd << "--disable-shared-gems "
     install_cmd << "&& ln -sf #{bundle_dir} #{File.join(latest_release, "vendor")}" if fetch(:bundle_symlink)
     install_cmd << ")"
     if fetch(:bundle_disable)
