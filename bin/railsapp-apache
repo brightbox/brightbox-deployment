@@ -181,7 +181,15 @@ end
 def configure_ports
   File.open("/etc/apache2/ports.conf", "w") do |f|
     f.puts "Listen 80"
-    f.puts "Listen 443" if File.file?("/etc/apache2/sites-enabled/rails-default-ssl")
+    f.puts %Q@
+<IfModule mod_ssl.c>
+    Listen 443
+</IfModule>
+
+<IfModule mod_gnutls.c>
+    Listen 443
+</IfModule>
+@
   end
 end
 
