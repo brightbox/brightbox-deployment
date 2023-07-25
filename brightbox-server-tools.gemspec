@@ -22,12 +22,11 @@ require 'rake'
 
 Gem::Specification.new do |s|
   s.name = "brightbox-server-tools"
-	s.version = Brightbox::VERSION
-	s.authors = ["John Leach","Neil Wilson","David Smalley","Caius Durling","Ben Arblaster"]
-	s.email = "support@brightbox.co.uk"
-	s.homepage = "http://wiki.brightbox.co.uk/docs:gemv2:start"
-  s.rubyforge_project = 'brightbox'
-  s.has_rdoc = false
+  s.version = Brightbox::VERSION
+  s.authors = ["John Leach","Neil Wilson","David Smalley","Caius Durling","Ben Arblaster"]
+  s.email = "support@brightbox.com"
+  s.homepage = "https://brightbox.com"
+  s.licenses = "AGPL-3.0-only"
   s.files = FileList["LICENSE", "*.rb", "bin/railsapp-*","lib/**/*.{rb,gz}"].exclude(/recipe/).to_a
   s.add_dependency("bundler", ">= 1.0")
   s.summary = "Brightbox Server configuration scripts"

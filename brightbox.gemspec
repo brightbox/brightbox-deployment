@@ -24,14 +24,11 @@ Gem::Specification.new do |s|
   s.name = "brightbox"
   s.version = Brightbox::VERSION
   s.authors = ["John Leach","Neil Wilson","David Smalley","Caius Durling","Ben Arblaster"]
-  s.email = "support@brightbox.co.uk"
-  s.homepage = "http://wiki.brightbox.co.uk/docs:gemv2:start"
-  s.rubyforge_project = 'brightbox'
-  s.has_rdoc = false
+  s.email = "support@brightbox.com"
+  s.homepage = "https://brightbox.com"
+  s.licenses = "AGPL-3.0-only"
   s.files = FileList["LICENSE", "*.rb", "lib/**/*.rb","bin/brightbox-capify"].exclude("lib/brightbox/webserver-common.rb").to_a
-  s.add_dependency("capistrano", "~> 2.15.5")
-  s.add_dependency("net-ssh", "2.7.0")
-  s.add_dependency("bundler", ">= 1.3.4")
+  s.add_dependency("capistrano", ">= 2.5")
   s.summary = "Brightbox rails deployment scripts for Capistrano"
   s.executables = ["brightbox-capify"]
   s.post_install_message = "*** Please note: The 'brightbox' command has been renamed to 'brightbox-capify' ***"
